@@ -21,11 +21,13 @@ app.get("/start", (req, res) => {
     return res.send("⚠️ البث شغال بالفعل");
   }
 
+  console.log("▶️ Starting FFmpeg...");
+
   ffmpegProcess = spawn("ffmpeg", [
     "-re",
     "-i", input,
 
-    // 🔥 FIX: تحويل إلى H.264 بدل copy
+    // 🔥 FIX: تحويل HEVC → H264
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
@@ -36,12 +38,27 @@ app.get("/start", (req, res) => {
     output
   ]);
 
+  // 🔍 مهم: عرض كل اللوج
   ffmpegProcess.stderr.on("data", data => {
-    console.log(data.toString());
+    const msg = data.toString();
+    console.log(msg);
+
+    if (msg.includes("frame=")) {
+      console.log("📡 LIVE STREAMING ACTIVE");
+    }
+
+    if (msg.includes("Error") || msg.includes("failed")) {
+      console.log("❌ FFmpeg ERROR DETECTED");
+    }
+  });
+
+  ffmpegProcess.on("exit", (code) => {
+    console.log("❌ FFmpeg exited with code:", code);
+    ffmpegProcess = null;
   });
 
   ffmpegProcess.on("close", () => {
-    console.log("❌ FFmpeg stopped");
+    console.log("❌ FFmpeg closed");
     ffmpegProcess = null;
   });
 
@@ -58,4 +75,4 @@ app.get("/stop", (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("Server running"));
+app.listen(port, () => console.log("Server running on port", port));
