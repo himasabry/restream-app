@@ -27,35 +27,27 @@ app.get("/start", (req, res) => {
     "-re",
     "-i", input,
 
-    // 🎯 اللوجو (لازم يكون في المشروع)
-    "-i", "https://s13.gifyu.com/images/bICCZ.md.png",
+    // 🎯 اللوجو (الصورة الثانية)
+    "-i", "logo.png",
 
-    // 🔥 تحويل الفيديو (حل مشكلة HEVC)
+    // 🔥 تحويل الفيديو (حل HEVC)
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
 
     "-c:a", "aac",
 
-    // 🎯 دمج اللوجو
-    "-filter_complex", "overlay=10:10",
+    // 🎯 دمج اللوجو (Overlay)
+    "-filter_complex",
+    "overlay=W-w-20:20",
 
     "-f", "flv",
     output
   ]);
 
-  // 🔍 لوج كامل
+  // 📡 لوج التشغيل
   ffmpegProcess.stderr.on("data", data => {
-    const msg = data.toString();
-    console.log(msg);
-
-    if (msg.includes("frame=")) {
-      console.log("📡 LIVE STREAMING ACTIVE");
-    }
-
-    if (msg.includes("Error") || msg.includes("failed")) {
-      console.log("❌ FFmpeg ERROR");
-    }
+    console.log(data.toString());
   });
 
   ffmpegProcess.on("exit", (code) => {
