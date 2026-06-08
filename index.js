@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 const app = express();
 
 let ffmpegProcesses = {};
+let viewers = {};
 
 // 🎯 لوجو لكل قناة
 function getLogo(id) {
@@ -19,8 +20,9 @@ function getLogo(id) {
 }
 
 app.get("/", (req, res) => {
-  res.send("🚀 Restream Running");
+  res.send("🚀 Restream System Running");
 });
+
 
 // ▶️ تشغيل قناة
 app.get("/start", (req, res) => {
@@ -38,49 +40,47 @@ app.get("/start", (req, res) => {
 
   const logo = getLogo(id);
 
-  const ffmpeg = spawn("ffmpeg", [
-    // 🔥 استقرار
-    "-re",
+  ffmpegProcesses[id] = spawn("ffmpeg", [
+    // 🔥 استقرار المصدر
     "-fflags", "+genpts+discardcorrupt",
     "-flags", "low_delay",
+    "-rw_timeout", "15000000",
+    "-reconnect", "1",
+    "-reconnect_streamed", "1",
+    "-reconnect_delay_max", "5",
 
+    "-re",
     "-i", input,
+
+    // 🎯 اللوجو
+    "-loop", "1",
     "-i", logo,
 
-    // 🔥 مهم جدًا (بدون map عشان ما نكسرش البث)
-    "-filter_complex",
-    "[0:v]scale=1280:720[bg];[bg][1:v]overlay=W-w-20:20",
-
-    // 🎥 فيديو
+    // 🔥 تحويل الفيديو
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
-    "-b:v", "1500k",
-    "-maxrate", "1500k",
-    "-bufsize", "3000k",
-    "-r", "25",
+    "-crf", "28",
 
-    // 🔊 صوت
     "-c:a", "aac",
-    "-b:a", "96k",
+
+    "-filter_complex", "overlay=W-w-20:20",
 
     "-f", "flv",
     output
   ]);
 
-  ffmpeg.stderr.on("data", data => {
-    console.log(`[${id}] ${data.toString()}`);
+  ffmpegProcesses[id].stderr.on("data", data => {
+    console.log(`[${id}] ${data}`);
   });
 
-  ffmpeg.on("exit", code => {
-    console.log(`❌ ${id} exited with code ${code}`);
+  ffmpegProcesses[id].on("exit", () => {
     delete ffmpegProcesses[id];
   });
 
-  ffmpegProcesses[id] = ffmpeg;
-
   res.send(`✅ Channel ${id} started`);
 });
+
 
 // 🛑 إيقاف قناة
 app.get("/stop", (req, res) => {
@@ -94,12 +94,46 @@ app.get("/stop", (req, res) => {
   res.send(`🛑 Channel ${id} stopped`);
 });
 
-// 📊 Status
+
+// 📡 عداد المشاهدين
+app.get("/watch", (req, res) => {
+  const id = req.query.id;
+
+  if (!id) return res.send("missing id");
+
+  if (!viewers[id]) viewers[id] = 0;
+  viewers[id]++;
+
+  res.send(`
+    <h3>Watching ${id}</h3>
+    <script>
+      setTimeout(() => {
+        fetch('/unwatch?id=${id}');
+      }, 10000);
+    </script>
+  `);
+});
+
+app.get("/unwatch", (req, res) => {
+  const id = req.query.id;
+
+  if (viewers[id]) {
+    viewers[id]--;
+    if (viewers[id] < 0) viewers[id] = 0;
+  }
+
+  res.send("ok");
+});
+
+
+// 📊 Status API
 app.get("/status", (req, res) => {
   res.json({
-    activeChannels: Object.keys(ffmpegProcesses)
+    activeChannels: Object.keys(ffmpegProcesses),
+    viewers
   });
 });
+
 
 // 🎛️ Dashboard
 app.get("/dashboard", (req, res) => {
@@ -107,48 +141,57 @@ app.get("/dashboard", (req, res) => {
 <!DOCTYPE html>
 <html>
 <head>
-<title>Dashboard</title>
-<style>
-body{background:#111;color:#fff;font-family:Arial;padding:20px}
-.card{background:#222;padding:15px;margin:10px 0;border-radius:10px}
-button{padding:8px 12px;margin:5px}
-</style>
+  <title>Dashboard</title>
+  <style>
+    body { font-family: Arial; background:#111; color:#fff; padding:20px; }
+    .card { background:#222; padding:15px; margin:10px 0; border-radius:10px; }
+    button { padding:8px 12px; margin:5px; cursor:pointer; }
+  </style>
 </head>
 <body>
 
 <h2>📡 Live Dashboard</h2>
+
 <div id="list"></div>
 
 <script>
-async function load(){
+async function load() {
   const res = await fetch('/status');
   const data = await res.json();
 
   const channels = ['ch1','ch2','ch3','ch4','ch5'];
-  const box = document.getElementById('list');
-  box.innerHTML = '';
+  const viewers = data.viewers || {};
 
-  channels.forEach(ch=>{
+  const container = document.getElementById('list');
+  container.innerHTML = '';
+
+  channels.forEach(ch => {
     const active = data.activeChannels.includes(ch);
+    const count = viewers[ch] || 0;
 
-    box.innerHTML += `
+    container.innerHTML += \`
       <div class="card">
-        <h3>${ch} - ${active ? '🟢 LIVE' : '🔴 OFFLINE'}</h3>
+        <h3>\${ch} - \${active ? '🟢 LIVE' : '🔴 OFFLINE'}</h3>
+        <p>👁️ Viewers: \${count}</p>
 
-        <a href="/start?id=${ch}&input=INPUT_URL&output=RTMP_URL">
+        <a href="/start?id=\${ch}&input=INPUT_URL&output=RTMP_URL">
           <button style="background:green;color:white;">Start</button>
         </a>
 
-        <a href="/stop?id=${ch}">
+        <a href="/stop?id=\${ch}">
           <button style="background:red;color:white;">Stop</button>
         </a>
+
+        <a href="/watch?id=\${ch}">
+          <button>Test Watch</button>
+        </a>
       </div>
-    `;
+    \`;
   });
 }
 
 load();
-setInterval(load,3000);
+setInterval(load, 3000);
 </script>
 
 </body>
@@ -157,4 +200,4 @@ setInterval(load,3000);
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("🚀 Server running on", port));
+app.listen(port, () => console.log("Server running on port", port));
