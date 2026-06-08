@@ -60,7 +60,7 @@ app.get("/start", (req, res) => {
       // 🎯 BEST LOGO POSITION (احترافي)
       // أعلى يمين مع مسافة مناسبة
       "-filter_complex",
-      "[0:v]scale=1280:720[vid];[vid][1:v]overlay=main_w-overlay_w-15:15",
+      "[0:v]scale=1280:720,setsar=1[base];[base][1:v]overlay=W-w-20:20"
 
       // 🎥 Video settings (stable)
       "-c:v", "libx264",
