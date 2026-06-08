@@ -19,7 +19,7 @@ function getLogo(id) {
 }
 
 app.get("/", (req, res) => {
-  res.send("🚀 Stable Restream System Running");
+  res.send("🚀 Restream System Running (Stable Mode)");
 });
 
 // ▶️ تشغيل قناة
@@ -49,31 +49,28 @@ app.get("/start", (req, res) => {
 
     "-re",
     "-i", input,
-
-    // 🎯 اللوجو
-    "-loop", "1",
     "-i", logo,
 
-    // 📉 تقليل الجودة لتثبيت البث
-    "-vf", "scale=1280:720",
+    // 🎯 مهم جدًا: كل الفلاتر في مكان واحد
+    "-filter_complex",
+    "[0:v]scale=1280:720[vid];[vid][1:v]overlay=W-w-20:20",
 
-    // 🎥 ترميز خفيف جدًا
+    "-map", "[vid]",
+    "-map", "0:a?",
+
+    // 🎥 ترميز خفيف ومستقر
     "-c:v", "libx264",
-    "-preset", "ultrafast",
+    "-preset", "veryfast",
     "-tune", "zerolatency",
 
     "-b:v", "1500k",
     "-maxrate", "1500k",
     "-bufsize", "3000k",
-
     "-r", "25",
 
-    // 🔊 الصوت
+    // 🔊 صوت
     "-c:a", "aac",
     "-b:a", "96k",
-
-    // 🎯 دمج اللوجو
-    "-filter_complex", "overlay=W-w-20:20",
 
     "-f", "flv",
     output
@@ -84,11 +81,11 @@ app.get("/start", (req, res) => {
   });
 
   ffmpegProcesses[id].on("exit", code => {
-    console.log(`❌ ${id} exited: ${code}`);
+    console.log(`❌ ${id} exited with code ${code}`);
     delete ffmpegProcesses[id];
   });
 
-  res.send(`✅ Channel ${id} started (LOW QUALITY STABLE MODE)`);
+  res.send(`✅ Channel ${id} started (STABLE MODE)`);
 });
 
 // 🛑 إيقاف قناة
@@ -116,7 +113,7 @@ app.get("/dashboard", (req, res) => {
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dashboard</title>
+  <title>Live Dashboard</title>
   <style>
     body { font-family: Arial; background:#111; color:#fff; padding:20px; }
     .card { background:#222; padding:15px; margin:10px 0; border-radius:10px; }
