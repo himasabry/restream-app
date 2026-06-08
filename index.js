@@ -21,24 +21,30 @@ app.get("/start", (req, res) => {
     return res.send("⚠️ البث شغال بالفعل");
   }
 
-  console.log("▶️ Starting FFmpeg...");
+  console.log("▶️ Starting stream with logo...");
 
   ffmpegProcess = spawn("ffmpeg", [
     "-re",
     "-i", input,
 
-    // 🔥 FIX: تحويل HEVC → H264
+    // 🎯 اللوجو (لازم يكون في المشروع)
+    "-i", "https://s13.gifyu.com/images/bICCZ.md.png",
+
+    // 🔥 تحويل الفيديو (حل مشكلة HEVC)
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
 
     "-c:a", "aac",
 
+    // 🎯 دمج اللوجو
+    "-filter_complex", "overlay=10:10",
+
     "-f", "flv",
     output
   ]);
 
-  // 🔍 مهم: عرض كل اللوج
+  // 🔍 لوج كامل
   ffmpegProcess.stderr.on("data", data => {
     const msg = data.toString();
     console.log(msg);
@@ -48,7 +54,7 @@ app.get("/start", (req, res) => {
     }
 
     if (msg.includes("Error") || msg.includes("failed")) {
-      console.log("❌ FFmpeg ERROR DETECTED");
+      console.log("❌ FFmpeg ERROR");
     }
   });
 
@@ -62,7 +68,7 @@ app.get("/start", (req, res) => {
     ffmpegProcess = null;
   });
 
-  res.send("✅ تم تشغيل البث");
+  res.send("✅ تم تشغيل البث مع اللوجو");
 });
 
 app.get("/stop", (req, res) => {
