@@ -57,11 +57,12 @@ app.get("/start", (req, res) => {
       "-i", input,
       "-i", logo,
 
-      // 🎯 FIXED LOGO POSITION (ثابت 100%)
+      // 🎯 BEST LOGO POSITION (احترافي)
+      // أعلى يمين مع مسافة مناسبة
       "-filter_complex",
-      "[0:v]scale=1280:720[vid];[vid][1:v]overlay=main_w-overlay_w-20:20",
+      "[0:v]scale=1280:720[vid];[vid][1:v]overlay=main_w-overlay_w-15:15",
 
-      // 🎥 Video
+      // 🎥 Video settings (stable)
       "-c:v", "libx264",
       "-preset", "veryfast",
       "-tune", "zerolatency",
@@ -93,7 +94,7 @@ app.get("/start", (req, res) => {
 
     ffmpegProcesses[id] = ffmpeg;
 
-    res.send(`✅ Channel ${id} started`);
+    res.send(`✅ Channel ${id} started (PRO MODE)`);
   } catch (err) {
     console.log("START ERROR:", err);
     res.send("❌ error starting stream");
