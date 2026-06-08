@@ -4,7 +4,6 @@ import { spawn } from "child_process";
 const app = express();
 
 let ffmpegProcesses = {};
-let viewers = {};
 
 // 🎯 لوجو لكل قناة
 function getLogo(id) {
@@ -20,9 +19,8 @@ function getLogo(id) {
 }
 
 app.get("/", (req, res) => {
-  res.send("🚀 Restream System Running");
+  res.send("🚀 Stable Restream System Running");
 });
-
 
 // ▶️ تشغيل قناة
 app.get("/start", (req, res) => {
@@ -56,14 +54,25 @@ app.get("/start", (req, res) => {
     "-loop", "1",
     "-i", logo,
 
-    // 🔥 تحويل الفيديو
+    // 📉 تقليل الجودة لتثبيت البث
+    "-vf", "scale=1280:720",
+
+    // 🎥 ترميز خفيف جدًا
     "-c:v", "libx264",
-    "-preset", "veryfast",
+    "-preset", "ultrafast",
     "-tune", "zerolatency",
-    "-crf", "28",
 
+    "-b:v", "1500k",
+    "-maxrate", "1500k",
+    "-bufsize", "3000k",
+
+    "-r", "25",
+
+    // 🔊 الصوت
     "-c:a", "aac",
+    "-b:a", "96k",
 
+    // 🎯 دمج اللوجو
     "-filter_complex", "overlay=W-w-20:20",
 
     "-f", "flv",
@@ -74,13 +83,13 @@ app.get("/start", (req, res) => {
     console.log(`[${id}] ${data}`);
   });
 
-  ffmpegProcesses[id].on("exit", () => {
+  ffmpegProcesses[id].on("exit", code => {
+    console.log(`❌ ${id} exited: ${code}`);
     delete ffmpegProcesses[id];
   });
 
-  res.send(`✅ Channel ${id} started`);
+  res.send(`✅ Channel ${id} started (LOW QUALITY STABLE MODE)`);
 });
-
 
 // 🛑 إيقاف قناة
 app.get("/stop", (req, res) => {
@@ -94,46 +103,12 @@ app.get("/stop", (req, res) => {
   res.send(`🛑 Channel ${id} stopped`);
 });
 
-
-// 📡 عداد المشاهدين
-app.get("/watch", (req, res) => {
-  const id = req.query.id;
-
-  if (!id) return res.send("missing id");
-
-  if (!viewers[id]) viewers[id] = 0;
-  viewers[id]++;
-
-  res.send(`
-    <h3>Watching ${id}</h3>
-    <script>
-      setTimeout(() => {
-        fetch('/unwatch?id=${id}');
-      }, 10000);
-    </script>
-  `);
-});
-
-app.get("/unwatch", (req, res) => {
-  const id = req.query.id;
-
-  if (viewers[id]) {
-    viewers[id]--;
-    if (viewers[id] < 0) viewers[id] = 0;
-  }
-
-  res.send("ok");
-});
-
-
 // 📊 Status API
 app.get("/status", (req, res) => {
   res.json({
-    activeChannels: Object.keys(ffmpegProcesses),
-    viewers
+    activeChannels: Object.keys(ffmpegProcesses)
   });
 });
-
 
 // 🎛️ Dashboard
 app.get("/dashboard", (req, res) => {
@@ -150,7 +125,7 @@ app.get("/dashboard", (req, res) => {
 </head>
 <body>
 
-<h2>📡 Live Dashboard</h2>
+<h2>📡 Stable Live Dashboard</h2>
 
 <div id="list"></div>
 
@@ -160,19 +135,16 @@ async function load() {
   const data = await res.json();
 
   const channels = ['ch1','ch2','ch3','ch4','ch5'];
-  const viewers = data.viewers || {};
 
   const container = document.getElementById('list');
   container.innerHTML = '';
 
   channels.forEach(ch => {
     const active = data.activeChannels.includes(ch);
-    const count = viewers[ch] || 0;
 
     container.innerHTML += \`
       <div class="card">
         <h3>\${ch} - \${active ? '🟢 LIVE' : '🔴 OFFLINE'}</h3>
-        <p>👁️ Viewers: \${count}</p>
 
         <a href="/start?id=\${ch}&input=INPUT_URL&output=RTMP_URL">
           <button style="background:green;color:white;">Start</button>
@@ -180,10 +152,6 @@ async function load() {
 
         <a href="/stop?id=\${ch}">
           <button style="background:red;color:white;">Stop</button>
-        </a>
-
-        <a href="/watch?id=\${ch}">
-          <button>Test Watch</button>
         </a>
       </div>
     \`;
@@ -200,4 +168,4 @@ setInterval(load, 3000);
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("Server running on port", port));
+app.listen(port, () => console.log("🚀 Server running on port", port));
