@@ -57,11 +57,11 @@ app.get("/start", (req, res) => {
       "-i", input,
       "-i", logo,
 
-      // 🎯 scale + overlay (stable)
+      // 🎯 FIXED LOGO POSITION (ثابت 100%)
       "-filter_complex",
-      "[0:v]scale=1280:720[vid];[vid][1:v]overlay=W-w-20:20",
+      "[0:v]scale=1280:720[vid];[vid][1:v]overlay=main_w-overlay_w-20:20",
 
-      // 🎥 video
+      // 🎥 Video
       "-c:v", "libx264",
       "-preset", "veryfast",
       "-tune", "zerolatency",
@@ -70,7 +70,7 @@ app.get("/start", (req, res) => {
       "-bufsize", "2400k",
       "-r", "25",
 
-      // 🔊 audio
+      // 🔊 Audio
       "-c:a", "aac",
       "-b:a", "96k",
 
@@ -119,7 +119,7 @@ app.get("/status", (req, res) => {
   });
 });
 
-// 📡 Dashboard (FIXED)
+// 📡 Dashboard
 app.get("/dashboard", (req, res) => {
   res.send(`
 <!DOCTYPE html>
@@ -176,7 +176,7 @@ setInterval(load, 3000);
   `);
 });
 
-// 🚀 Railway health check
+// 🚀 Health check
 app.get("/health", (req, res) => {
   res.send("OK");
 });
