@@ -3,74 +3,90 @@ import { spawn } from "child_process";
 
 const app = express();
 
-let ffmpegProcess;
+let ffmpegProcesses = {};
+
+// 🎯 دالة اختيار اللوجو حسب القناة
+function getLogo(id) {
+  const logos = {
+    ch1: "logo.png",
+    ch2: "logo2.png",
+    ch3: "logo3.png",
+    ch4: "logo4.png",
+    ch5: "logo5.png",
+  };
+
+  return logos[id] || "logo.png"; // fallback
+}
 
 app.get("/", (req, res) => {
-  res.send("🚀 Restream is running");
+  res.send("🚀 Multi Stream with Fixed Logos Running");
 });
 
 app.get("/start", (req, res) => {
+  const id = req.query.id;
   const input = req.query.input;
   const output = req.query.output;
 
-  if (!input || !output) {
-    return res.send("❌ لازم input و output");
+  if (!id || !input || !output) {
+    return res.send("❌ لازم id + input + output");
   }
 
-  if (ffmpegProcess) {
-    return res.send("⚠️ البث شغال بالفعل");
+  if (ffmpegProcesses[id]) {
+    return res.send("⚠️ القناة شغالة بالفعل");
   }
 
-  console.log("▶️ Starting stream with logo...");
+  const logo = getLogo(id);
 
-  ffmpegProcess = spawn("ffmpeg", [
+  console.log(`▶️ Starting ${id} with logo: ${logo}`);
+
+  ffmpegProcesses[id] = spawn("ffmpeg", [
     "-re",
     "-i", input,
 
-    // 🎯 اللوجو (الصورة الثانية)
-    "-i", "logo.png",
+    // 🎯 اللوجو حسب القناة
+    "-i", logo,
 
-    // 🔥 تحويل الفيديو (حل HEVC)
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
 
     "-c:a", "aac",
 
-    // 🎯 دمج اللوجو (Overlay)
-    "-filter_complex",
-    "overlay=W-w-20:20",
+    "-filter_complex", "overlay=W-w-20:20",
 
     "-f", "flv",
     output
   ]);
 
-  // 📡 لوج التشغيل
-  ffmpegProcess.stderr.on("data", data => {
-    console.log(data.toString());
+  ffmpegProcesses[id].stderr.on("data", data => {
+    console.log(`[${id}] ${data}`);
   });
 
-  ffmpegProcess.on("exit", (code) => {
-    console.log("❌ FFmpeg exited with code:", code);
-    ffmpegProcess = null;
+  ffmpegProcesses[id].on("exit", code => {
+    console.log(`❌ ${id} exited:`, code);
+    delete ffmpegProcesses[id];
   });
 
-  ffmpegProcess.on("close", () => {
-    console.log("❌ FFmpeg closed");
-    ffmpegProcess = null;
-  });
-
-  res.send("✅ تم تشغيل البث مع اللوجو");
+  res.send(`✅ Channel ${id} started with ${logo}`);
 });
 
 app.get("/stop", (req, res) => {
-  if (ffmpegProcess) {
-    ffmpegProcess.kill("SIGKILL");
-    ffmpegProcess = null;
-    return res.send("🛑 تم إيقاف البث");
+  const id = req.query.id;
+
+  if (ffmpegProcesses[id]) {
+    ffmpegProcesses[id].kill("SIGKILL");
+    delete ffmpegProcesses[id];
+    return res.send(`🛑 ${id} stopped`);
   }
-  res.send("❌ مفيش بث شغال");
+
+  res.send("❌ القناة مش شغالة");
+});
+
+app.get("/status", (req, res) => {
+  res.json({
+    active: Object.keys(ffmpegProcesses)
+  });
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("Server running on port", port));
+app.listen(port, () => console.log("Server running"));
