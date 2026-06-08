@@ -19,7 +19,7 @@ function getLogo(id) {
 }
 
 app.get("/", (req, res) => {
-  res.send("🚀 Stable Multi Stream Running");
+  res.send("🚀 Restream Multi Channel Running");
 });
 
 // ▶️ تشغيل قناة
@@ -38,14 +38,11 @@ app.get("/start", (req, res) => {
 
   const logo = getLogo(id);
 
-  console.log(`▶️ Starting ${id} with logo: ${logo}`);
-
   ffmpegProcesses[id] = spawn("ffmpeg", [
-    // 🔥 استقرار قوي للمصدر
+    // 🔥 استقرار HLS
     "-fflags", "+genpts+discardcorrupt",
     "-flags", "low_delay",
     "-rw_timeout", "15000000",
-
     "-reconnect", "1",
     "-reconnect_streamed", "1",
     "-reconnect_delay_max", "5",
@@ -53,11 +50,11 @@ app.get("/start", (req, res) => {
     "-re",
     "-i", input,
 
-    // 🎯 اللوجو (ثابت)
+    // 🎯 اللوجو
     "-loop", "1",
     "-i", logo,
 
-    // 🔥 تحويل الفيديو (حل HEVC + تقليل الضغط)
+    // 🔥 تحويل الفيديو
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
@@ -73,16 +70,11 @@ app.get("/start", (req, res) => {
   ]);
 
   ffmpegProcesses[id].stderr.on("data", data => {
-    console.log(`[${id}] ${data.toString()}`);
+    console.log(`[${id}] ${data}`);
   });
 
   ffmpegProcesses[id].on("exit", code => {
-    console.log(`❌ ${id} exited with code:`, code);
-    delete ffmpegProcesses[id];
-  });
-
-  ffmpegProcesses[id].on("close", () => {
-    console.log(`❌ ${id} closed`);
+    console.log(`❌ ${id} exited:`, code);
     delete ffmpegProcesses[id];
   });
 
@@ -103,11 +95,69 @@ app.get("/stop", (req, res) => {
   res.send(`🛑 Channel ${id} stopped`);
 });
 
-// 📊 حالة القنوات
+// 📊 حالة القنوات (API)
 app.get("/status", (req, res) => {
   res.json({
     activeChannels: Object.keys(ffmpegProcesses)
   });
+});
+
+// 🎛️ Dashboard Live
+app.get("/dashboard", (req, res) => {
+  res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Dashboard</title>
+  <style>
+    body { font-family: Arial; background:#111; color:#fff; padding:20px; }
+    .card { background:#222; padding:15px; margin:10px 0; border-radius:10px; }
+    button { padding:8px 12px; margin:5px; cursor:pointer; }
+    a { text-decoration:none; }
+  </style>
+</head>
+<body>
+
+<h2>📡 Live Stream Dashboard</h2>
+
+<div id="list"></div>
+
+<script>
+async function load() {
+  const res = await fetch('/status');
+  const data = await res.json();
+
+  const container = document.getElementById('list');
+  container.innerHTML = '';
+
+  const channels = ['ch1','ch2','ch3','ch4','ch5'];
+
+  channels.forEach(ch => {
+    const active = data.activeChannels.includes(ch);
+
+    container.innerHTML += \`
+      <div class="card">
+        <h3>\${ch} - \${active ? '🟢 LIVE' : '🔴 OFFLINE'}</h3>
+
+        <a href="/start?id=\${ch}&input=INPUT_URL&output=RTMP_URL">
+          <button style="background:green;color:white;">Start</button>
+        </a>
+
+        <a href="/stop?id=\${ch}">
+          <button style="background:red;color:white;">Stop</button>
+        </a>
+      </div>
+    \`;
+  });
+}
+
+load();
+setInterval(load, 3000);
+</script>
+
+</body>
+</html>
+  `);
 });
 
 const port = process.env.PORT || 3000;
