@@ -24,14 +24,25 @@ app.get("/start", (req, res) => {
   ffmpegProcess = spawn("ffmpeg", [
     "-re",
     "-i", input,
-    "-c:v", "copy",
+
+    // 🔥 FIX: تحويل إلى H.264 بدل copy
+    "-c:v", "libx264",
+    "-preset", "veryfast",
+    "-tune", "zerolatency",
+
     "-c:a", "aac",
+
     "-f", "flv",
     output
   ]);
 
   ffmpegProcess.stderr.on("data", data => {
     console.log(data.toString());
+  });
+
+  ffmpegProcess.on("close", () => {
+    console.log("❌ FFmpeg stopped");
+    ffmpegProcess = null;
   });
 
   res.send("✅ تم تشغيل البث");
