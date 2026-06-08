@@ -18,7 +18,7 @@ function getLogo(id) {
   return logos[id] || "logo.png";
 }
 
-// 🛡️ حماية السيرفر
+// 🛡️ حماية السيرفر من الكراش
 process.on("uncaughtException", (err) => {
   console.log("🔥 Error:", err);
 });
@@ -29,8 +29,9 @@ process.on("unhandledRejection", (err) => {
 
 // 🌐 Home
 app.get("/", (req, res) => {
-  res.send("🚀 Restream System Running");
+  res.send("🚀 Restream System Running PRO");
 });
+
 
 // ▶️ Start Stream
 app.get("/start", (req, res) => {
@@ -57,15 +58,15 @@ app.get("/start", (req, res) => {
       "-i", input,
       "-i", logo,
 
-      // 🎯 BEST LOGO POSITION (احترافي)
-      // أعلى يمين مع مسافة مناسبة
+      // 🎯 FIXED LOGO (100% stable position)
       "-filter_complex",
-      "[0:v]scale=1280:720,setsar=1[base];[base][1:v]overlay=W-w-20:20"
+      "[0:v]scale=1280:720,setsar=1[base];[base][1:v]overlay=W-w-20:20",
 
-      // 🎥 Video settings (stable)
+      // 🎥 Video settings (stable for streaming)
       "-c:v", "libx264",
       "-preset", "veryfast",
       "-tune", "zerolatency",
+
       "-b:v", "1200k",
       "-maxrate", "1200k",
       "-bufsize", "2400k",
@@ -84,7 +85,7 @@ app.get("/start", (req, res) => {
     });
 
     ffmpeg.on("exit", (code) => {
-      console.log(`❌ ${id} exited ${code}`);
+      console.log(`❌ ${id} exited with code ${code}`);
       delete ffmpegProcesses[id];
     });
 
@@ -94,12 +95,13 @@ app.get("/start", (req, res) => {
 
     ffmpegProcesses[id] = ffmpeg;
 
-    res.send(`✅ Channel ${id} started (PRO MODE)`);
+    res.send(`✅ Channel ${id} started PRO`);
   } catch (err) {
     console.log("START ERROR:", err);
     res.send("❌ error starting stream");
   }
 });
+
 
 // 🛑 Stop Stream
 app.get("/stop", (req, res) => {
@@ -113,12 +115,14 @@ app.get("/stop", (req, res) => {
   res.send(`🛑 Channel ${id} stopped`);
 });
 
+
 // 📊 Status API
 app.get("/status", (req, res) => {
   res.json({
     active: Object.keys(ffmpegProcesses)
   });
 });
+
 
 // 📡 Dashboard
 app.get("/dashboard", (req, res) => {
@@ -135,7 +139,7 @@ app.get("/dashboard", (req, res) => {
 </head>
 <body>
 
-<h2>📡 Live Dashboard</h2>
+<h2>📡 Live Dashboard PRO</h2>
 
 <div id="list"></div>
 
@@ -177,7 +181,8 @@ setInterval(load, 3000);
   `);
 });
 
-// 🚀 Health check
+
+// 🚀 Railway health check
 app.get("/health", (req, res) => {
   res.send("OK");
 });
