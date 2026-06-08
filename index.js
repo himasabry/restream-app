@@ -5,7 +5,7 @@ const app = express();
 
 let ffmpegProcesses = {};
 
-// 🎯 دالة اختيار اللوجو حسب القناة
+// 🎯 اختيار اللوجو لكل قناة
 function getLogo(id) {
   const logos = {
     ch1: "logo.png",
@@ -15,13 +15,14 @@ function getLogo(id) {
     ch5: "logo5.png",
   };
 
-  return logos[id] || "logo.png"; // fallback
+  return logos[id] || "logo.png";
 }
 
 app.get("/", (req, res) => {
-  res.send("🚀 Multi Stream with Fixed Logos Running");
+  res.send("🚀 Stable Multi Stream Running");
 });
 
+// ▶️ تشغيل قناة
 app.get("/start", (req, res) => {
   const id = req.query.id;
   const input = req.query.input;
@@ -40,18 +41,31 @@ app.get("/start", (req, res) => {
   console.log(`▶️ Starting ${id} with logo: ${logo}`);
 
   ffmpegProcesses[id] = spawn("ffmpeg", [
+    // 🔥 استقرار قوي للمصدر
+    "-fflags", "+genpts+discardcorrupt",
+    "-flags", "low_delay",
+    "-rw_timeout", "15000000",
+
+    "-reconnect", "1",
+    "-reconnect_streamed", "1",
+    "-reconnect_delay_max", "5",
+
     "-re",
     "-i", input,
 
-    // 🎯 اللوجو حسب القناة
+    // 🎯 اللوجو (ثابت)
+    "-loop", "1",
     "-i", logo,
 
+    // 🔥 تحويل الفيديو (حل HEVC + تقليل الضغط)
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
+    "-crf", "28",
 
     "-c:a", "aac",
 
+    // 🎯 دمج اللوجو
     "-filter_complex", "overlay=W-w-20:20",
 
     "-f", "flv",
@@ -59,34 +73,42 @@ app.get("/start", (req, res) => {
   ]);
 
   ffmpegProcesses[id].stderr.on("data", data => {
-    console.log(`[${id}] ${data}`);
+    console.log(`[${id}] ${data.toString()}`);
   });
 
   ffmpegProcesses[id].on("exit", code => {
-    console.log(`❌ ${id} exited:`, code);
+    console.log(`❌ ${id} exited with code:`, code);
     delete ffmpegProcesses[id];
   });
 
-  res.send(`✅ Channel ${id} started with ${logo}`);
+  ffmpegProcesses[id].on("close", () => {
+    console.log(`❌ ${id} closed`);
+    delete ffmpegProcesses[id];
+  });
+
+  res.send(`✅ Channel ${id} started`);
 });
 
+// 🛑 إيقاف قناة
 app.get("/stop", (req, res) => {
   const id = req.query.id;
 
-  if (ffmpegProcesses[id]) {
-    ffmpegProcesses[id].kill("SIGKILL");
-    delete ffmpegProcesses[id];
-    return res.send(`🛑 ${id} stopped`);
+  if (!id || !ffmpegProcesses[id]) {
+    return res.send("❌ القناة غير شغالة");
   }
 
-  res.send("❌ القناة مش شغالة");
+  ffmpegProcesses[id].kill("SIGKILL");
+  delete ffmpegProcesses[id];
+
+  res.send(`🛑 Channel ${id} stopped`);
 });
 
+// 📊 حالة القنوات
 app.get("/status", (req, res) => {
   res.json({
-    active: Object.keys(ffmpegProcesses)
+    activeChannels: Object.keys(ffmpegProcesses)
   });
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("Server running"));
+app.listen(port, () => console.log("Server running on port", port));
