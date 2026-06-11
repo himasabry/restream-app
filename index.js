@@ -8,22 +8,22 @@ let ffmpegProcesses = {};
 // 🎯 القنوات (هنا تعدل الروابط براحتك)
 const channels = {
   ch1: {
-    input: "https://example.com/ch1.m3u8",
-    output: "rtmp://rtmp.livepeer.com/live/stream-key-1"
+    input: "https://streem.rodoye.com/live/fac/max1/index.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
   ch2: {
-    input: "https://example.com/ch2.m3u8",
-    output: "rtmp://rtmp.livepeer.com/live/stream-key-2"
+    input: "https://streem.rodoye.com/live/rodo/max_2/index.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/5716-lclm-8mhs-hd0n"
   },
 
   ch3: {
-    input: "https://example.com/ch3.m3u8",
+    input: "https://streem.rodoye.com/live/rodo/max_3/index.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/stream-key-3"
   },
 
   ch4: {
-    input: "https://example.com/ch4.m3u8",
+    input: "https://streem.rodoye.com/live/rodo/max_4/index.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/stream-key-4"
   },
 
