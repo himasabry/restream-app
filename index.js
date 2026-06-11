@@ -5,7 +5,16 @@ const app = express();
 
 let ffmpegProcesses = {};
 
-// 🎯 القنوات (هنا تعدل الروابط براحتك)
+// 🔑 Livepeer API
+const LIVEPEER_API_KEY = process.env.LIVEPEER_API_KEY || "";
+
+// 🎯 Playback IDs (عدّلهم حسب قنواتك)
+const playbackIds = {
+  ch1: "6ce1k8qh6zhk8ian",
+  ch2: "5716cx0dcob4oe5v"
+};
+
+// 🎯 القنوات
 const channels = {
   ch1: {
     input: "https://streem.rodoye.com/live/fac/max1/index.m3u8",
@@ -57,31 +66,25 @@ process.on("unhandledRejection", (err) => {
 
 // 🌐 Home
 app.get("/", (req, res) => {
-  res.send("🚀 Restream System Running PRO");
+  res.send("🚀 Restream System Running PRO + Livepeer Views");
 });
 
 
-// ▶️ Start Stream (بدون input/output)
+// ▶️ Start Stream
 app.get("/start", (req, res) => {
   try {
     const id = req.query.id;
 
-    if (!id) {
-      return res.send("❌ missing channel id");
-    }
+    if (!id) return res.send("❌ missing channel id");
 
     const channel = channels[id];
 
-    if (!channel) {
-      return res.send("❌ channel not found");
-    }
+    if (!channel) return res.send("❌ channel not found");
 
     if (ffmpegProcesses[id]) {
       return res.send("⚠️ already running");
     }
 
-    const input = channel.input;
-    const output = channel.output;
     const logo = getLogo(id);
 
     const ffmpeg = spawn("ffmpeg", [
@@ -89,14 +92,12 @@ app.get("/start", (req, res) => {
       "-fflags", "+genpts+discardcorrupt",
       "-flags", "low_delay",
 
-      "-i", input,
+      "-i", channel.input,
       "-i", logo,
 
-      // 🎯 لوجو ثابت احترافي
       "-filter_complex",
       "[0:v]scale=1280:720,setsar=1[base];[base][1:v]overlay=W-w-5:5",
 
-      // 🎥 Video
       "-c:v", "libx264",
       "-preset", "veryfast",
       "-tune", "zerolatency",
@@ -106,12 +107,11 @@ app.get("/start", (req, res) => {
       "-bufsize", "2400k",
       "-r", "25",
 
-      // 🔊 Audio
       "-c:a", "aac",
       "-b:a", "96k",
 
       "-f", "flv",
-      output
+      channel.output
     ]);
 
     ffmpeg.stderr.on("data", (data) => {
@@ -146,11 +146,41 @@ app.get("/stop", (req, res) => {
 });
 
 
-// 📊 Status
+// 📊 Live Status
 app.get("/status", (req, res) => {
   res.json({
     active: Object.keys(ffmpegProcesses)
   });
+});
+
+
+// 📡 Livepeer Views API
+app.get("/views", async (req, res) => {
+  const playbackId = req.query.playbackId;
+
+  if (!playbackId) {
+    return res.json({ viewers: 0 });
+  }
+
+  try {
+    const r = await fetch(
+      `https://livepeer.studio/api/data/views/now?playbackId=${playbackId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${LIVEPEER_API_KEY}`
+        }
+      }
+    );
+
+    const data = await r.json();
+
+    const viewers = data?.[0]?.viewCount || 0;
+
+    res.json({ viewers });
+
+  } catch (err) {
+    res.json({ viewers: 0 });
+  }
 });
 
 
@@ -169,11 +199,26 @@ app.get("/dashboard", (req, res) => {
 </head>
 <body>
 
-<h2>📡 Live Dashboard PRO</h2>
+<h2>📡 Live Dashboard PRO + Views</h2>
 
 <div id="list"></div>
 
 <script>
+
+const playbackIds = ${JSON.stringify(playbackIds)};
+
+async function getViews(ch){
+  if(!playbackIds[ch]) return 0;
+
+  try {
+    const r = await fetch('/views?playbackId=' + playbackIds[ch]);
+    const j = await r.json();
+    return j.viewers || 0;
+  } catch(e){
+    return 0;
+  }
+}
+
 async function load() {
   const res = await fetch('/status');
   const data = await res.json();
@@ -183,12 +228,14 @@ async function load() {
   const box = document.getElementById('list');
   box.innerHTML = '';
 
-  channels.forEach(ch => {
+  for (const ch of channels) {
     const active = data.active.includes(ch);
+    const viewers = await getViews(ch);
 
     box.innerHTML += \`
       <div class="card">
         <h3>\${ch} - \${active ? '🟢 LIVE' : '🔴 OFFLINE'}</h3>
+        <p>👁️ Viewers: \${viewers}</p>
 
         <a href="/start?id=\${ch}">
           <button style="background:green;color:white;">Start</button>
@@ -199,11 +246,12 @@ async function load() {
         </a>
       </div>
     \`;
-  });
+  }
 }
 
 load();
-setInterval(load, 3000);
+setInterval(load, 5000);
+
 </script>
 
 </body>
