@@ -5,6 +5,34 @@ const app = express();
 
 let ffmpegProcesses = {};
 
+// 🎯 القنوات (هنا تعدل الروابط براحتك)
+const channels = {
+  ch1: {
+    input: "https://example.com/ch1.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/stream-key-1"
+  },
+
+  ch2: {
+    input: "https://example.com/ch2.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/stream-key-2"
+  },
+
+  ch3: {
+    input: "https://example.com/ch3.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/stream-key-3"
+  },
+
+  ch4: {
+    input: "https://example.com/ch4.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/stream-key-4"
+  },
+
+  ch5: {
+    input: "https://example.com/ch5.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/stream-key-5"
+  }
+};
+
 // 🎯 لوجو لكل قناة
 const logos = {
   ch1: "logo1.png",
@@ -18,7 +46,7 @@ function getLogo(id) {
   return logos[id] || "logo.png";
 }
 
-// 🛡️ حماية السيرفر من الكراش
+// 🛡️ حماية من الكراش
 process.on("uncaughtException", (err) => {
   console.log("🔥 Error:", err);
 });
@@ -33,21 +61,27 @@ app.get("/", (req, res) => {
 });
 
 
-// ▶️ Start Stream
+// ▶️ Start Stream (بدون input/output)
 app.get("/start", (req, res) => {
   try {
     const id = req.query.id;
-    const input = req.query.input;
-    const output = req.query.output;
 
-    if (!id || !input || !output) {
-      return res.send("❌ missing params");
+    if (!id) {
+      return res.send("❌ missing channel id");
+    }
+
+    const channel = channels[id];
+
+    if (!channel) {
+      return res.send("❌ channel not found");
     }
 
     if (ffmpegProcesses[id]) {
       return res.send("⚠️ already running");
     }
 
+    const input = channel.input;
+    const output = channel.output;
     const logo = getLogo(id);
 
     const ffmpeg = spawn("ffmpeg", [
@@ -58,11 +92,11 @@ app.get("/start", (req, res) => {
       "-i", input,
       "-i", logo,
 
-      // 🎯 FIXED LOGO (100% stable position)
+      // 🎯 لوجو ثابت احترافي
       "-filter_complex",
       "[0:v]scale=1280:720,setsar=1[base];[base][1:v]overlay=W-w-5:5",
 
-      // 🎥 Video settings (stable for streaming)
+      // 🎥 Video
       "-c:v", "libx264",
       "-preset", "veryfast",
       "-tune", "zerolatency",
@@ -85,20 +119,16 @@ app.get("/start", (req, res) => {
     });
 
     ffmpeg.on("exit", (code) => {
-      console.log(`❌ ${id} exited with code ${code}`);
+      console.log(`❌ ${id} exited ${code}`);
       delete ffmpegProcesses[id];
-    });
-
-    ffmpeg.on("error", (err) => {
-      console.log("FFMPEG ERROR:", err);
     });
 
     ffmpegProcesses[id] = ffmpeg;
 
-    res.send(`✅ Channel ${id} started PRO`);
+    res.send(`✅ Channel ${id} started`);
   } catch (err) {
     console.log("START ERROR:", err);
-    res.send("❌ error starting stream");
+    res.send("❌ error");
   }
 });
 
@@ -116,7 +146,7 @@ app.get("/stop", (req, res) => {
 });
 
 
-// 📊 Status API
+// 📊 Status
 app.get("/status", (req, res) => {
   res.json({
     active: Object.keys(ffmpegProcesses)
@@ -160,7 +190,7 @@ async function load() {
       <div class="card">
         <h3>\${ch} - \${active ? '🟢 LIVE' : '🔴 OFFLINE'}</h3>
 
-        <a href="/start?id=\${ch}&input=INPUT_URL&output=RTMP_URL">
+        <a href="/start?id=\${ch}">
           <button style="background:green;color:white;">Start</button>
         </a>
 
@@ -182,7 +212,7 @@ setInterval(load, 3000);
 });
 
 
-// 🚀 Railway health check
+// 🚀 Health check
 app.get("/health", (req, res) => {
   res.send("OK");
 });
