@@ -12,7 +12,7 @@ let viewerIntervals = {};
 // 🎯 القنوات
 const channels = {
   ch1: {
-    input: "https://ostora-tv.hima-sabry2015.workers.dev/super/play.m3u8?id=158516&cat=7215",
+    input: "https://super.hima-sabry2015.workers.dev/ch/bmax1_1080/index.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
