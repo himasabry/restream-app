@@ -12,7 +12,7 @@ let viewerIntervals = {};
 // 🎯 القنوات
 const channels = {
   ch1: {
-    input: "http://core.itsall.pro/live/Allgoodlotfi/hhDZSxCpeD/291494.m3u8",
+    input: "https://super-livetv.hima-sabry2015.workers.dev/?id=01",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
