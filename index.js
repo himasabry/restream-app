@@ -41,9 +41,9 @@ const channels = {
 const logos = {
   ch1: "logo1.png",
   ch2: "logo22.png",
-  ch3: "logo3.png",
-  ch4: "logo4.png",
-  ch5: "logo5.png",
+  ch3: "logo33.png",
+  ch4: "logo44.png",
+  ch5: "logo55.png",
 };
 
 function getLogo(id) {
