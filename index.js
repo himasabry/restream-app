@@ -5,10 +5,9 @@ const app = express();
 
 let ffmpegProcesses = {};
 
-// 👁️ عداد مشاهدين آمن (بدون Sets / بدون Memory Leak)
+// 👁️ عداد مشاهدين مستقر
 let viewers = {};
 
-// initialize channel viewer object
 function init(id) {
   if (!viewers[id]) {
     viewers[id] = {
@@ -70,7 +69,7 @@ process.on("unhandledRejection", (err) => {
 
 // 🌐 Home
 app.get("/", (req, res) => {
-  res.send("🚀 Restream System Running PRO (Stable Viewers)");
+  res.send("🚀 Restream System Running FINAL");
 });
 
 
@@ -78,7 +77,7 @@ app.get("/", (req, res) => {
 app.get("/start", (req, res) => {
   const id = req.query.id;
 
-  if (!id) return res.send("❌ missing channel id");
+  if (!id) return res.send("❌ missing id");
 
   const channel = channels[id];
 
@@ -116,8 +115,8 @@ app.get("/start", (req, res) => {
     channel.output
   ]);
 
-  ffmpeg.stderr.on("data", (data) => {
-    console.log(`[${id}] ${data.toString()}`);
+  ffmpeg.stderr.on("data", (d) => {
+    console.log(`[${id}] ${d.toString()}`);
   });
 
   ffmpeg.on("exit", (code) => {
@@ -144,11 +143,11 @@ app.get("/stop", (req, res) => {
 });
 
 
-// 👁️ Watch (stable counter)
+// 👁️ Watch
 app.get("/watch", (req, res) => {
   const id = req.query.id;
 
-  if (!channels[id]) return res.send("invalid channel");
+  if (!channels[id]) return res.send("invalid");
 
   init(id);
 
@@ -171,7 +170,7 @@ app.get("/watch", (req, res) => {
 });
 
 
-// 🔁 ping refresh viewer
+// 🔁 ping
 app.get("/ping", (req, res) => {
   const id = req.query.id;
 
@@ -185,7 +184,7 @@ app.get("/ping", (req, res) => {
 });
 
 
-// 🧹 cleanup (important for stability)
+// 🧹 cleanup
 setInterval(() => {
   const now = Date.now();
 
@@ -197,7 +196,7 @@ setInterval(() => {
 }, 10000);
 
 
-// 📊 Status (LIVE VIEWERS)
+// 📊 STATUS
 app.get("/status", (req, res) => {
   const result = {};
 
@@ -212,7 +211,7 @@ app.get("/status", (req, res) => {
 });
 
 
-// 📡 Dashboard
+// 📡 DASHBOARD (FIXED - NO CRASH)
 app.get("/dashboard", (req, res) => {
   res.send(`
 <!DOCTYPE html>
@@ -227,7 +226,7 @@ app.get("/dashboard", (req, res) => {
 </head>
 <body>
 
-<h2>📡 Live Dashboard Stable Viewers</h2>
+<h2>📡 Live Dashboard FINAL</h2>
 
 <div id="list"></div>
 
@@ -243,24 +242,12 @@ async function load() {
   Object.keys(data).forEach(ch => {
     const d = data[ch];
 
-    box.innerHTML += `
-      <div class="card">
-        <h3>${ch} - ${d.active ? '🟢 LIVE' : '🔴 OFFLINE'}</h3>
-        <p>👁️ Viewers: ${d.viewers}</p>
-
-        <a href="/start?id=${ch}">
-          <button style="background:green;color:white;">Start</button>
-        </a>
-
-        <a href="/stop?id=${ch}">
-          <button style="background:red;color:white;">Stop</button>
-        </a>
-
-        <a href="/watch?id=${ch}" target="_blank">
-          <button>Watch Test</button>
-        </a>
-      </div>
-    `;
+    box.innerHTML += "<div class='card'>" +
+      "<h3>" + ch + " - " + (d.active ? '🟢 LIVE' : '🔴 OFFLINE') + "</h3>" +
+      "<p>👁️ Viewers: " + d.viewers + "</p>" +
+      "<a href='/start?id=" + ch + "'><button style='background:green;color:white;'>Start</button></a>" +
+      "<a href='/stop?id=" + ch + "'><button style='background:red;color:white;'>Stop</button></a>" +
+      "</div>";
   });
 }
 
@@ -275,7 +262,7 @@ setInterval(load, 3000);
 });
 
 
-// 🚀 Health check
+// 🚀 Health
 app.get("/health", (req, res) => {
   res.send("OK");
 });
