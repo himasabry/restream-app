@@ -17,7 +17,7 @@ const channels = {
   },
 
   ch2: {
-    input: "https://streem.rodoye.com/live/rodo/max_2/index.m3u8",
+    input: "https://streem.rodoye.com/live/ff/max2/index.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/5716-lclm-8mhs-hd0n"
   },
 
