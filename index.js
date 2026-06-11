@@ -5,8 +5,18 @@ const app = express();
 
 let ffmpegProcesses = {};
 
-// 👁️ عداد المشاهدين المحلي
+// 👁️ عداد مشاهدين آمن (بدون Sets / بدون Memory Leak)
 let viewers = {};
+
+// initialize channel viewer object
+function init(id) {
+  if (!viewers[id]) {
+    viewers[id] = {
+      count: 0,
+      last: Date.now()
+    };
+  }
+}
 
 // 🎯 القنوات
 const channels = {
@@ -60,7 +70,7 @@ process.on("unhandledRejection", (err) => {
 
 // 🌐 Home
 app.get("/", (req, res) => {
-  res.send("🚀 Restream System Running PRO + LOCAL VIEWERS");
+  res.send("🚀 Restream System Running PRO (Stable Viewers)");
 });
 
 
@@ -110,7 +120,8 @@ app.get("/start", (req, res) => {
     console.log(`[${id}] ${data.toString()}`);
   });
 
-  ffmpeg.on("exit", () => {
+  ffmpeg.on("exit", (code) => {
+    console.log(`❌ ${id} exited ${code}`);
     delete ffmpegProcesses[id];
   });
 
@@ -133,29 +144,21 @@ app.get("/stop", (req, res) => {
 });
 
 
-// 👁️ Watch endpoint (يزود المشاهدين)
+// 👁️ Watch (stable counter)
 app.get("/watch", (req, res) => {
   const id = req.query.id;
 
-  if (!id || !channels[id]) {
-    return res.send("invalid channel");
-  }
+  if (!channels[id]) return res.send("invalid channel");
 
-  if (!viewers[id]) viewers[id] = new Set();
+  init(id);
 
-  const viewerId = req.ip + "_" + Date.now();
-
-  viewers[id].add(viewerId);
-
-  // تحديث كل 10 ثواني
-  setTimeout(() => {
-    viewers[id].delete(viewerId);
-  }, 10000);
+  viewers[id].count++;
+  viewers[id].last = Date.now();
 
   res.send(`
     <html>
-      <body style="margin:0;background:black;">
-        <h3 style="color:white;text-align:center;">Watching ${id}</h3>
+      <body style="margin:0;background:black;color:white;text-align:center;">
+        <h2>Watching ${id}</h2>
 
         <script>
           setInterval(() => {
@@ -168,26 +171,40 @@ app.get("/watch", (req, res) => {
 });
 
 
-// 🔁 ping لتجديد المشاهدة
+// 🔁 ping refresh viewer
 app.get("/ping", (req, res) => {
   const id = req.query.id;
 
-  if (!viewers[id]) viewers[id] = new Set();
+  if (!channels[id]) return res.send("ok");
 
-  viewers[id].add(req.ip);
+  init(id);
+
+  viewers[id].last = Date.now();
 
   res.send("ok");
 });
 
 
-// 📊 Status (مع عدد المشاهدين الحقيقي)
+// 🧹 cleanup (important for stability)
+setInterval(() => {
+  const now = Date.now();
+
+  for (const id in viewers) {
+    if (now - viewers[id].last > 15000) {
+      viewers[id].count = 0;
+    }
+  }
+}, 10000);
+
+
+// 📊 Status (LIVE VIEWERS)
 app.get("/status", (req, res) => {
   const result = {};
 
   for (const id in channels) {
     result[id] = {
       active: !!ffmpegProcesses[id],
-      viewers: viewers[id] ? viewers[id].size : 0
+      viewers: viewers[id]?.count || 0
     };
   }
 
@@ -210,7 +227,7 @@ app.get("/dashboard", (req, res) => {
 </head>
 <body>
 
-<h2>📡 Live Dashboard + LOCAL VIEWERS</h2>
+<h2>📡 Live Dashboard Stable Viewers</h2>
 
 <div id="list"></div>
 
