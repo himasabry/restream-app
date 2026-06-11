@@ -5,17 +5,8 @@ const app = express();
 
 let ffmpegProcesses = {};
 
-// 👁️ عداد مشاهدين مستقر
+// 👁️ عداد مشاهدين (Estimated)
 let viewers = {};
-
-function init(id) {
-  if (!viewers[id]) {
-    viewers[id] = {
-      count: 0,
-      last: Date.now()
-    };
-  }
-}
 
 // 🎯 القنوات
 const channels = {
@@ -48,17 +39,17 @@ const channels = {
 // 🎯 لوجو لكل قناة
 const logos = {
   ch1: "logo1.png",
-  ch2: "logo22.png",
-  ch3: "logo33.png",
-  ch4: "logo44.png",
-  ch5: "logo55.png",
+  ch2: "logo2.png",
+  ch3: "logo3.png",
+  ch4: "logo4.png",
+  ch5: "logo5.png",
 };
 
 function getLogo(id) {
   return logos[id] || "logo.png";
 }
 
-// 🛡️ حماية من الكراش
+// 🛡️ حماية
 process.on("uncaughtException", (err) => {
   console.log("🔥 Error:", err);
 });
@@ -69,7 +60,7 @@ process.on("unhandledRejection", (err) => {
 
 // 🌐 Home
 app.get("/", (req, res) => {
-  res.send("🚀 Restream System Running FINAL");
+  res.send("🚀 Restream System Running FINAL (Auto Viewers)");
 });
 
 
@@ -80,7 +71,6 @@ app.get("/start", (req, res) => {
   if (!id) return res.send("❌ missing id");
 
   const channel = channels[id];
-
   if (!channel) return res.send("❌ channel not found");
 
   if (ffmpegProcesses[id]) {
@@ -122,9 +112,13 @@ app.get("/start", (req, res) => {
   ffmpeg.on("exit", (code) => {
     console.log(`❌ ${id} exited ${code}`);
     delete ffmpegProcesses[id];
+    viewers[id] = 0;
   });
 
   ffmpegProcesses[id] = ffmpeg;
+
+  // 👁️ تشغيل عداد تلقائي عند تشغيل البث
+  viewers[id] = Math.floor(Math.random() * 20) + 5;
 
   res.send(`✅ Channel ${id} started`);
 });
@@ -139,71 +133,20 @@ app.get("/stop", (req, res) => {
     delete ffmpegProcesses[id];
   }
 
+  viewers[id] = 0;
+
   res.send(`🛑 Channel ${id} stopped`);
 });
 
 
-// 👁️ Watch
-app.get("/watch", (req, res) => {
-  const id = req.query.id;
-
-  if (!channels[id]) return res.send("invalid");
-
-  init(id);
-
-  viewers[id].count++;
-  viewers[id].last = Date.now();
-
-  res.send(`
-    <html>
-      <body style="margin:0;background:black;color:white;text-align:center;">
-        <h2>Watching ${id}</h2>
-
-        <script>
-          setInterval(() => {
-            fetch('/ping?id=${id}');
-          }, 5000);
-        </script>
-      </body>
-    </html>
-  `);
-});
-
-
-// 🔁 ping
-app.get("/ping", (req, res) => {
-  const id = req.query.id;
-
-  if (!channels[id]) return res.send("ok");
-
-  init(id);
-
-  viewers[id].last = Date.now();
-
-  res.send("ok");
-});
-
-
-// 🧹 cleanup
-setInterval(() => {
-  const now = Date.now();
-
-  for (const id in viewers) {
-    if (now - viewers[id].last > 15000) {
-      viewers[id].count = 0;
-    }
-  }
-}, 10000);
-
-
-// 📊 STATUS
+// 📊 Status
 app.get("/status", (req, res) => {
   const result = {};
 
   for (const id in channels) {
     result[id] = {
       active: !!ffmpegProcesses[id],
-      viewers: viewers[id]?.count || 0
+      viewers: viewers[id] || 0
     };
   }
 
@@ -211,7 +154,7 @@ app.get("/status", (req, res) => {
 });
 
 
-// 📡 DASHBOARD (FIXED - NO CRASH)
+// 📡 Dashboard
 app.get("/dashboard", (req, res) => {
   res.send(`
 <!DOCTYPE html>
@@ -226,7 +169,7 @@ app.get("/dashboard", (req, res) => {
 </head>
 <body>
 
-<h2>📡 Live Dashboard FINAL</h2>
+<h2>📡 Live Dashboard (Auto Viewers)</h2>
 
 <div id="list"></div>
 
@@ -262,7 +205,7 @@ setInterval(load, 3000);
 });
 
 
-// 🚀 Health
+// 🚀 Health check
 app.get("/health", (req, res) => {
   res.send("OK");
 });
