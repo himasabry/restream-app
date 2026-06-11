@@ -12,7 +12,7 @@ let viewerIntervals = {};
 // 🎯 القنوات
 const channels = {
   ch1: {
-    input: "https://streem.rodoye.com/live/fac/max1/index.m3u8",
+    input: "https://super-livetv.hima-sabry2015.workers.dev/?id=01",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
