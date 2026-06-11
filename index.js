@@ -5,8 +5,9 @@ const app = express();
 
 let ffmpegProcesses = {};
 
-// 👁️ عداد مشاهدين (Estimated)
+// 👁️ عداد مشاهدين (محسن بدل fake ثابت)
 let viewers = {};
+let viewerIntervals = {};
 
 // 🎯 القنوات
 const channels = {
@@ -60,7 +61,7 @@ process.on("unhandledRejection", (err) => {
 
 // 🌐 Home
 app.get("/", (req, res) => {
-  res.send("🚀 Restream System Running FINAL (Auto Viewers)");
+  res.send("🚀 Restream System Running FINAL (Improved Viewers)");
 });
 
 
@@ -112,13 +113,31 @@ app.get("/start", (req, res) => {
   ffmpeg.on("exit", (code) => {
     console.log(`❌ ${id} exited ${code}`);
     delete ffmpegProcesses[id];
+
+    // 🧹 تنظيف العدّاد
     viewers[id] = 0;
+
+    if (viewerIntervals[id]) {
+      clearInterval(viewerIntervals[id]);
+      delete viewerIntervals[id];
+    }
   });
 
   ffmpegProcesses[id] = ffmpeg;
 
-  // 👁️ تشغيل عداد تلقائي عند تشغيل البث
-  viewers[id] = Math.floor(Math.random() * 20) + 5;
+  // 👁️ init viewers
+  viewers[id] = Math.floor(Math.random() * 10) + 3;
+
+  // 🔥 حركة مشاهدة واقعية
+  if (viewerIntervals[id]) clearInterval(viewerIntervals[id]);
+
+  viewerIntervals[id] = setInterval(() => {
+    if (!viewers[id]) return;
+
+    let change = Math.floor(Math.random() * 3) - 1; // -1 0 +1
+    viewers[id] = Math.max(1, viewers[id] + change);
+
+  }, 4000);
 
   res.send(`✅ Channel ${id} started`);
 });
@@ -134,6 +153,11 @@ app.get("/stop", (req, res) => {
   }
 
   viewers[id] = 0;
+
+  if (viewerIntervals[id]) {
+    clearInterval(viewerIntervals[id]);
+    delete viewerIntervals[id];
+  }
 
   res.send(`🛑 Channel ${id} stopped`);
 });
@@ -169,7 +193,7 @@ app.get("/dashboard", (req, res) => {
 </head>
 <body>
 
-<h2>📡 Live Dashboard (Auto Viewers)</h2>
+<h2>📡 Live Dashboard (Improved Viewers)</h2>
 
 <div id="list"></div>
 
