@@ -13,7 +13,7 @@ let viewerIntervals = {};
 const channels = {
   ch4k: {
     input: 
-    "https://genral.oxml1237.workers.dev/index.m3u8?base=https%3A%2F%2Fk2.marketplace-io-none-kode-steeeee.lol%2F&id=BEIN4KHDR&key=FfWDWDwd$$",
+    "http://185.160.192.14/live/171348492752/5S6HGsea3j/255224.m3u8",
     output: "rtmp://ssh101.bozztv.com/ssh101/max4khdr"
   },
   
