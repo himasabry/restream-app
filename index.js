@@ -184,54 +184,290 @@ app.get("/status", (req, res) => {
 });
 
 
-// 📡 Dashboard
+// 📡 Dashboard Modern UI
 app.get("/dashboard", (req, res) => {
-  res.send(`
+res.send(`
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>Dashboard</title>
-  <style>
-    body { font-family: Arial; background:#111; color:#fff; padding:20px; }
-    .card { background:#222; padding:15px; margin:10px 0; border-radius:10px; }
-    button { padding:8px 12px; margin:5px; cursor:pointer; }
-  </style>
+
+<meta charset="utf-8">
+
+<title>Super Dashboard</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:#0b1020;
+color:white;
+padding:30px;
+}
+
+.top{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+}
+
+.title{
+font-size:34px;
+font-weight:bold;
+}
+
+.stats{
+display:flex;
+gap:15px;
+}
+
+.stat{
+background:#151d35;
+padding:18px;
+border-radius:15px;
+min-width:150px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:
+repeat(auto-fill,minmax(300px,1fr));
+
+gap:20px;
+}
+
+.card{
+
+background:
+
+linear-gradient(
+145deg,
+#141d36,
+#0c1326
+);
+
+border-radius:18px;
+
+padding:20px;
+
+border:1px solid #222;
+
+transition:.2s;
+}
+
+.card:hover{
+transform:translateY(-3px);
+}
+
+.live{
+color:#00ff88;
+}
+
+.off{
+color:#ff4444;
+}
+
+.view{
+color:#66ccff;
+margin-top:10px;
+}
+
+.btns{
+margin-top:20px;
+display:flex;
+gap:10px;
+}
+
+button{
+
+border:none;
+
+padding:12px;
+
+border-radius:12px;
+
+color:white;
+
+cursor:pointer;
+
+width:100%;
+
+font-size:15px;
+
+}
+
+.start{
+background:#00aa55;
+}
+
+.stop{
+background:#dd3333;
+}
+
+.start:hover{
+opacity:.9;
+}
+
+.stop:hover{
+opacity:.9;
+}
+
+</style>
+
 </head>
+
 <body>
 
-<h2>📡 Live Dashboard (Improved Viewers)</h2>
+<div class="top">
 
-<div id="list"></div>
+<div class="title">
+📡 Super Dashboard
+</div>
+
+<div class="stats">
+
+<div class="stat">
+LIVE
+<br>
+<span id="live">
+0
+</span>
+</div>
+
+<div class="stat">
+VIEWERS
+<br>
+<span id="total">
+0
+</span>
+</div>
+
+</div>
+
+</div>
+
+<div
+class="grid"
+id="list">
+</div>
 
 <script>
 
-async function load() {
-  const res = await fetch('/status');
-  const data = await res.json();
+async function load(){
 
-  const box = document.getElementById('list');
-  box.innerHTML = '';
+const res=
+await fetch("/status");
 
-  Object.keys(data).forEach(ch => {
-    const d = data[ch];
+const data=
+await res.json();
 
-    box.innerHTML += "<div class='card'>" +
-      "<h3>" + ch + " - " + (d.active ? '🟢 LIVE' : '🔴 OFFLINE') + "</h3>" +
-      "<p>👁️ Viewers: " + d.viewers + "</p>" +
-      "<a href='/start?id=" + ch + "'><button style='background:green;color:white;'>Start</button></a>" +
-      "<a href='/stop?id=" + ch + "'><button style='background:red;color:white;'>Stop</button></a>" +
-      "</div>";
-  });
+const box=
+document.getElementById(
+"list"
+);
+
+box.innerHTML="";
+
+let live=0;
+
+let total=0;
+
+Object
+.keys(data)
+.forEach(ch=>{
+
+const d=data[ch];
+
+if(d.active)
+live++;
+
+total+=
+d.viewers;
+
+box.innerHTML+=\`
+
+<div class="card">
+
+<h2>
+\${ch}
+</h2>
+
+<h3 class="\${d.active?'live':'off'}">
+
+\${d.active
+?'🟢 LIVE'
+:'🔴 OFFLINE'}
+
+</h3>
+
+<div class="view">
+
+👁️
+\${d.viewers}
+
+مشاهد
+
+</div>
+
+<div class="btns">
+
+<a href="/start?id=\${ch}">
+<button class="start">
+START
+</button>
+</a>
+
+<a href="/stop?id=\${ch}">
+<button class="stop">
+STOP
+</button>
+</a>
+
+</div>
+
+</div>
+
+\`;
+
+});
+
+document
+.getElementById(
+"live"
+)
+.innerText=
+live;
+
+document
+.getElementById(
+"total"
+)
+.innerText=
+total;
+
 }
 
 load();
-setInterval(load, 3000);
+
+setInterval(
+load,
+3000
+);
 
 </script>
 
 </body>
+
 </html>
-  `);
+
+`);
 });
 
 
