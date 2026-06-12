@@ -18,7 +18,7 @@ const channels = {
   },
   
   ch1: {
-    input: "https://streem.rodoye.com/live/fa11c/max1/index.m3u8",
+    input: "https://lb1.aab1.top/odai/123321/66.ts",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
