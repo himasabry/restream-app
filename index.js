@@ -18,7 +18,7 @@ const channels = {
   },
   
   ch1: {
-    input: "https://genral.oxml1237.workers.dev/index.m3u8?base=https%3A%2F%2Fk2.marketplace-io-none-kode-steeeee.lol%2F&id=bmax1080&key=FfWDWDwd$$",
+    input: "https://streem.rodoye.com/live/fa11c/max1/index.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
