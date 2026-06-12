@@ -28,8 +28,8 @@ const channels = {
   },
 
   ch3: {
-    input: "https://streem.rodoye.com/live/rodo/max_3/index.m3u8",
-    output: "rtmp://rtmp.livepeer.com/live/stream-key-3"
+    input: "http://2030.buzz-4k.xyz/live/56272882873737/xh3agpq1cm/1950411.m3u8",
+    output: "rtmp://ssh101.bozztv.com/ssh101/max1hd"
   },
 
   ch4: {
