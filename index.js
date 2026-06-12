@@ -12,7 +12,7 @@ let viewerIntervals = {};
 // 🎯 القنوات
 const channels = {
   ch4k: {
-    input: "http://2030.buzz-4k.xyz/live/56272882873737/xh3agpq1cm/1950411.m3u8",
+    input: "https://super.hima-sabry2015.workers.dev/ch/bmax1_1080/index.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/758d-vhe5-kbzu-802d"
   },
   
