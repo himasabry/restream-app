@@ -17,7 +17,7 @@ const channels = {
   },
   
   ch1: {
-    input: "https://prod-fastly-eu-west-3.video.pscp.tv/Transcoding/v1/hls/XWL3w2U87JkbduskEnBHjBBFZK-GgN_XJGSLkPGUYFPpYtKYtX8icU9JV1fuUCCXG0jCdH5nfvn0qzdrRgFH3g/non_transcode/eu-west-3/periscope-replay-direct-prod-eu-west-3-public/master_dynamic_delta.m3u8?type=live",
+    input: "https://genral.oxml1237.workers.dev/index.m3u8?base=https%3A%2F%2Fk2.marketplace-io-none-kode-steeeee.lol%2F&id=bmax1080&key=FfWDWDwd$$",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
