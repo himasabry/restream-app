@@ -23,7 +23,7 @@ const channels = {
   },
 
   ch2: {
-    input: "http://stap2025.me:8080/live/nsbp46qijx/ukbyu5668f/146127.m3u8",
+    input: "https://streem.rodoye.com/live/rr/max2/index.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/5716-lclm-8mhs-hd0n"
   },
 
