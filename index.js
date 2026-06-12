@@ -12,7 +12,8 @@ let viewerIntervals = {};
 // 🎯 القنوات
 const channels = {
   ch4k: {
-    input: "https://super.hima-sabry2015.workers.dev/ch/bmax1_1080/index.m3u8",
+    input: 
+    "https://genral.oxml1237.workers.dev/index.m3u8?base=https%3A%2F%2Fk2.marketplace-io-none-kode-steeeee.lol%2F&id=BEIN4KHDR&key=FfWDWDwd$$",
     output: "rtmp://ssh101.bozztv.com/ssh101/max4khdr"
   },
   
