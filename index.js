@@ -17,12 +17,12 @@ const channels = {
   },
   
   ch1: {
-    input: "http://194.60.93.157/proxy?url=http://185.191.126.127:8080/live///357643467990765/Ofgo3yz8CH/462211.ts",
+    input: "https://prod-fastly-eu-west-3.video.pscp.tv/Transcoding/v1/hls/XWL3w2U87JkbduskEnBHjBBFZK-GgN_XJGSLkPGUYFPpYtKYtX8icU9JV1fuUCCXG0jCdH5nfvn0qzdrRgFH3g/non_transcode/eu-west-3/periscope-replay-direct-prod-eu-west-3-public/master_dynamic_delta.m3u8?type=live",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
   ch2: {
-    input: "https://super.hima-sabry2015.workers.dev/ch/bmax2_4k.m3u8",
+    input: "http://core.itsall.pro/live/Allgoodlotfi/hhDZSxCpeD/291495.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/5716-lclm-8mhs-hd0n"
   },
 
