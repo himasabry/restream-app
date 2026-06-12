@@ -23,7 +23,7 @@ const channels = {
   },
 
   ch2: {
-    input: "http://core.itsall.pro/live/Allgoodlotfi/hhDZSxCpeD/291495.m3u8",
+    input: "http://stap2025.me:8080/live/nsbp46qijx/ukbyu5668f/146127.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/5716-lclm-8mhs-hd0n"
   },
 
