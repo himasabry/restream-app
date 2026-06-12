@@ -44,7 +44,7 @@ const channels = {
 
 // 🎯 لوجو لكل قناة
 const logos = {
-  ch4k: "logo4k.png",
+  ch4k: "logo4kh.png",
   ch1: "logo1.png",
   ch2: "logo22.png",
   ch3: "logo33.png",
