@@ -93,30 +93,26 @@ app.get("/start", (req, res) => {
     "-flags", "low_delay",
 
     "-i", channel.input,
-    "-i", logo,
+"-i", logo,
 
-    "-filter_complex",
-"[1:v]scale=180:-1[logo];[0:v]scale=1920:1080[base];[base][logo]overlay=W-w-5:5"
+"-filter_complex",
+"[1:v]scale=180:-1[logo];[0:v][logo]overlay=W-w-5:5",
 
 "-c:v", "libx264",
 "-preset", "veryfast",
 "-tune", "zerolatency",
-
-"-profile:v", "high",
 
 "-b:v", "5000k",
 "-maxrate", "6000k",
 "-bufsize", "12000k",
 
 "-r", "25",
-"-g", "50",
 
 "-c:a", "aac",
 "-b:a", "128k",
-"-ar", "48000",
 
-    "-f", "flv",
-    channel.output
+"-f", "flv",
+channel.output
   ]);
 
   ffmpeg.stderr.on("data", (d) => {
