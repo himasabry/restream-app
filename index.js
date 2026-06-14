@@ -96,18 +96,24 @@ app.get("/start", (req, res) => {
     "-i", logo,
 
     "-filter_complex",
-    "[0:v]scale=1280:720,setsar=1[base];[base][1:v]overlay=W-w-5:5",
+"[0:v]scale=1920:1080,setsar=1[base];[base][1:v]overlay=W-w-10:10",
 
-    "-c:v", "libx264",
-    "-preset", "veryfast",
-    "-tune", "zerolatency",
-    "-b:v", "1200k",
-    "-maxrate", "1200k",
-    "-bufsize", "2400k",
-    "-r", "25",
+"-c:v", "libx264",
+"-preset", "veryfast",
+"-tune", "zerolatency",
 
-    "-c:a", "aac",
-    "-b:a", "96k",
+"-profile:v", "high",
+
+"-b:v", "5000k",
+"-maxrate", "6000k",
+"-bufsize", "12000k",
+
+"-r", "25",
+"-g", "50",
+
+"-c:a", "aac",
+"-b:a", "128k",
+"-ar", "48000",
 
     "-f", "flv",
     channel.output
