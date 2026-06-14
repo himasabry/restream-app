@@ -99,16 +99,20 @@ app.get("/start", (req, res) => {
 "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=-1:3100[logo];[base][logo]overlay=main_w-overlay_w-2:2",
 
 "-c:v", "libx264",
-"-preset", "veryfast",
+
+"-preset", "superfast",
+
 "-tune", "zerolatency",
 
 "-profile:v", "high",
 
-"-b:v", "5000k",
-"-maxrate", "6000k",
-"-bufsize", "12000k",
+"-b:v", "3500k",
+"-maxrate", "4000k",
+"-bufsize", "8000k",
 
 "-r", "25",
+
+"-g", "50",
 
 "-c:a", "aac",
 "-b:a", "128k",
