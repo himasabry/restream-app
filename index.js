@@ -18,7 +18,7 @@ const channels = {
   },
   
   ch1: {
-    input: "https://lb1.aab1.top/odai/123321/66.ts",
+    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
