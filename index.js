@@ -13,7 +13,7 @@ let viewerIntervals = {};
 const channels = {
   ch4k: {
     input: 
-    "http://185.160.192.14/live/171348492752/5S6HGsea3j/255224.m3u8",
+    "https://super.hima-sabry2015.workers.dev/ch/bmax1_1080/index.m3u8",
     output: "rtmp://ssh101.bozztv.com/ssh101/max4khdr"
   },
   
