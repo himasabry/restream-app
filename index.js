@@ -13,7 +13,7 @@ let viewerIntervals = {};
 const channels = {
   ch4k: {
     input: 
-    "https://super.hima-sabry2015.workers.dev/ch/bmax1_1080/index.m3u8",
+    "https://4k.plasma-app.workers.dev/hls/max_4k.m3u8?key=Pl4K",
     output: "rtmp://ssh101.bozztv.com/ssh101/max4khdr"
   },
   
