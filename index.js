@@ -96,14 +96,17 @@ app.get("/start", (req, res) => {
 "-i", logo,
 
 "-filter_complex",
-"[1:v]scale=260:-1[logo];[0:v][logo]overlay=main_w-overlay_w-5:5",
+"[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=-1:220[logo];[base][logo]overlay=main_w-overlay_w-5:5",
 
 "-c:v", "libx264",
 "-preset", "veryfast",
+"-tune", "zerolatency",
 
-"-b:v", "4500k",
-"-maxrate", "5000k",
-"-bufsize", "9000k",
+"-profile:v", "high",
+
+"-b:v", "5000k",
+"-maxrate", "6000k",
+"-bufsize", "12000k",
 
 "-r", "25",
 
