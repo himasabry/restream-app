@@ -96,7 +96,7 @@ app.get("/start", (req, res) => {
 "-i", logo,
 
 "-filter_complex",
-"[1:v]scale=180:-1[logo];[0:v][logo]overlay=W-w-5:5",
+"[0:v]scale=1920:1080[base];[1:v]scale=-1:120[logo];[base][logo]overlay=W-w-5:5"
 
 "-c:v", "libx264",
 "-preset", "veryfast",
