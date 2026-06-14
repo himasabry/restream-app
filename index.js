@@ -38,8 +38,8 @@ const channels = {
   },
 
   ch5: {
-    input: "https://example.com/ch5.m3u8",
-    output: "rtmp://rtmp.livepeer.com/live/stream-key-5"
+    input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255225.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/a4be-dmef-x7d9-4kme"
   }
 };
 
