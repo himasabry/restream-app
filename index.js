@@ -100,22 +100,22 @@ app.get("/start", (req, res) => {
 
 "-c:v", "libx264",
 
-"-preset", "superfast",
+"-preset", "veryfast",
 
 "-tune", "zerolatency",
 
 "-profile:v", "high",
 
-"-b:v", "3500k",
-"-maxrate", "4000k",
-"-bufsize", "8000k",
+"-b:v", "4500k",
+"-maxrate", "5000k",
+"-bufsize", "10000k",
 
 "-r", "25",
-
 "-g", "50",
 
 "-c:a", "aac",
-"-b:a", "128k",
+"-b:a", "160k",
+"-ar", "48000",
 
 "-f", "flv",
 channel.output
