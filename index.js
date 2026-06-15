@@ -13,7 +13,7 @@ let viewerIntervals = {};
 const channels = {
   ch4k: {
     input: 
-    "https://4k.plasma-app.workers.dev/hls/.m3u8?key=",
+    "https://4k.plasma-app.workers.dev/hls/max_4k.m3u8?key=Pl4K",
     output: "rtmp://ssh101.bozztv.com/ssh101/max4khdr"
   },
   
