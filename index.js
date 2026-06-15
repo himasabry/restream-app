@@ -18,7 +18,7 @@ const channels = {
   },
   
   ch1: {
-    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
+    input: "https://max.pl4k.workers.dev/max14k/index.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
   },
 
