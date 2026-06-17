@@ -23,7 +23,7 @@ let viewers = {};
 // ===============================
 const channels = {
   ch4k: {
-    input: "https://genral.oxml1237.workers.dev/index.m3u8?base=https%3A%2F%2Fk-f.for-sav-ogr-403-cf.monster&id=BEIN4KHDR&key=TtOoLl5ger5gr5",
+    input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255224.m3u8",
     output: "rtmp://rtmp.livepeer.com/live/a4be-dmef-x7d9-4kme"
   },
   ch1: {
