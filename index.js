@@ -14,7 +14,7 @@ const channels = {
   ch4k: {
     input: 
     "https://genral.oxml1237.workers.dev/index.m3u8?base=https%3A%2F%2Fk-f.for-sav-ogr-403-cf.monster&id=BEIN4KHDR&key=TtOoLl5ger5gr5",
-    output: "rtmp://ssh101.bozztv.com/ssh101/max4khdr"
+    output: "rtmp://rtmp.livepeer.com/live/a4be-dmef-x7d9-4kme"
   },
   
   ch1: {
