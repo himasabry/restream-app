@@ -1,16 +1,25 @@
 import express from "express";
 import { spawn } from "child_process";
+import { WebSocketServer } from "ws";
 
 const app = express();
 app.use(express.json());
 
+// ===============================
+// 🔥 WebSocket setup
+// ===============================
+const wss = new WebSocketServer({ noServer: true });
+let clients = [];
+
+// ===============================
+// 🎯 State
 // ===============================
 let ffmpegProcesses = {};
 let viewerIntervals = {};
 let viewers = {};
 
 // ===============================
-// 🎯 القنوات
+// 🎯 Channels
 // ===============================
 const channels = {
   ch4k: {
@@ -40,6 +49,8 @@ const channels = {
 };
 
 // ===============================
+// 🎯 Logos
+// ===============================
 const logos = {
   ch4k: "logo4kh.png",
   ch1: "logo1.png",
@@ -54,7 +65,7 @@ function getLogo(id) {
 }
 
 // ===============================
-// 🛡️ حماية من crash
+// 🛡️ Safety
 // ===============================
 process.on("uncaughtException", (err) => {
   console.log("🔥 ERROR:", err.message);
@@ -65,7 +76,7 @@ process.on("unhandledRejection", (err) => {
 });
 
 // ===============================
-// 🎬 تشغيل القناة
+// 🎬 FFmpeg stream
 // ===============================
 function spawnStream(id) {
   if (ffmpegProcesses[id]) return;
@@ -73,7 +84,7 @@ function spawnStream(id) {
   const ch = channels[id];
   if (!ch) return;
 
-  console.log("▶ start:", id);
+  console.log("▶ START:", id);
 
   const ffmpeg = spawn("ffmpeg", [
     "-re",
@@ -124,7 +135,7 @@ function spawnStream(id) {
   });
 
   ffmpeg.on("exit", (code) => {
-    console.log("❌ exit:", id);
+    console.log("❌ EXIT:", id);
 
     delete ffmpegProcesses[id];
     viewers[id] = 0;
@@ -134,6 +145,7 @@ function spawnStream(id) {
       delete viewerIntervals[id];
     }
 
+    // 🔥 auto restart safe
     setTimeout(() => {
       spawnStream(id);
     }, 8000);
@@ -141,10 +153,10 @@ function spawnStream(id) {
 }
 
 // ===============================
-// 🌐 API
+// 🌐 API ROUTES
 // ===============================
 app.get("/", (req, res) => {
-  res.send("🚀 Server Running OK");
+  res.send("🚀 STREAM SERVER PRO RUNNING");
 });
 
 app.get("/start", (req, res) => {
@@ -186,7 +198,6 @@ app.get("/status", (req, res) => {
   res.json(result);
 });
 
-// ===============================
 app.get("/clear", (req, res) => {
   for (const id in ffmpegProcesses) {
     ffmpegProcesses[id].kill("SIGKILL");
@@ -199,15 +210,14 @@ app.get("/clear", (req, res) => {
   res.send("cleared");
 });
 
-// ===============================
 app.get("/settings", (req, res) => {
   res.json({
     status: "ok",
-    channels: Object.keys(channels).length
+    channels: Object.keys(channels).length,
+    system: "PRO MODE"
   });
 });
 
-// ===============================
 app.post("/add", (req, res) => {
   const { id, input, output } = req.body;
 
@@ -220,14 +230,13 @@ app.post("/add", (req, res) => {
   res.send("added");
 });
 
-// ===============================
 app.post("/import", (req, res) => {
   console.log("M3U:", req.body?.url);
   res.send("imported");
 });
 
 // ===============================
-// 📡 DASHBOARD (FIXED)
+// 📡 DASHBOARD PRO
 // ===============================
 app.get("/dashboard", (req, res) => {
   res.send(`
@@ -235,20 +244,29 @@ app.get("/dashboard", (req, res) => {
 <html dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard</title>
+<title>Dashboard PRO</title>
 
 <style>
-body{
-background:linear-gradient(180deg,#040915,#091325);
-color:white;
-font-family:Arial;
-padding:20px;
+body{margin:0;font-family:Arial;background:#070b1a;color:white}
+
+.top{
+padding:15px;
+background:#0f1730;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+gap:15px;
+padding:15px;
 }
 
 .card{
 background:#101938;
-padding:20px;
-margin:10px;
+padding:15px;
 border-radius:12px;
 }
 
@@ -265,52 +283,81 @@ margin:5px;
 
 .start{background:#1da74f;color:white}
 .stop{background:#d53d3d;color:white}
+.action{background:#3d83ff;color:white}
 </style>
 </head>
 
 <body>
 
-<h1>📡 Dashboard</h1>
+<div class="top">
+<h2>📡 Dashboard PRO</h2>
 
-<div id="list"></div>
+<div>
+<button onclick="clearAll()" class="action">🧹 Clear</button>
+<button onclick="add()" class="action">＋ Add</button>
+<button onclick="settings()" class="action">⚙ Settings</button>
+</div>
+</div>
+
+<div id="grid" class="grid"></div>
 
 <script>
 
-async function load(){
-const r = await fetch("/status");
-const data = await r.json();
+let ws = new WebSocket(location.origin.replace("http","ws"));
 
-const box = document.getElementById("list");
-box.innerHTML = "";
+ws.onmessage = (msg) => {
+  render(JSON.parse(msg.data));
+};
 
-for(const ch in data){
-const d = data[ch];
+function render(data){
+  const box = document.getElementById("grid");
+  box.innerHTML = "";
 
-box.innerHTML += \`
-<div class="card">
-<h2>\${ch}</h2>
+  for(const ch in data){
+    const d = data[ch];
 
-<div class="\${d.active ? 'online':'offline'}">
-\${d.active ? '🟢 LIVE' : '🔴 OFFLINE'}
-</div>
+    box.innerHTML += \`
+      <div class="card">
+        <h2>\${ch}</h2>
 
-<p>👁️ \${d.viewers}</p>
+        <div class="\${d.active ? 'online':'offline'}">
+          \${d.active ? '🟢 LIVE' : '🔴 OFFLINE'}
+        </div>
 
-<a href="/start?id=\${ch}">
-<button class="start">تشغيل</button>
-</a>
+        <p>👁️ \${d.viewers}</p>
 
-<a href="/stop?id=\${ch}">
-<button class="stop">إيقاف</button>
-</a>
-</div>
-\`;
+        <a href="/start?id=\${ch}">
+          <button class="start">Start</button>
+        </a>
+
+        <a href="/stop?id=\${ch}">
+          <button class="stop">Stop</button>
+        </a>
+      </div>
+    \`;
+  }
 }
+
+async function clearAll(){
+  await fetch("/clear");
 }
 
-load();
-setInterval(load, 3000);
+async function add(){
+  const id = prompt("ID");
+  const input = prompt("Input");
+  const output = prompt("Output");
 
+  await fetch("/add",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({id,input,output})
+  });
+}
+
+async function settings(){
+  const r = await fetch("/settings");
+  alert(JSON.stringify(await r.json(),null,2));
+}
 </script>
 
 </body>
@@ -319,7 +366,42 @@ setInterval(load, 3000);
 });
 
 // ===============================
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log("🚀 RUNNING:", port);
+// 🚀 WebSocket server
+// ===============================
+const server = app.listen(process.env.PORT || 3000, () => {
+  console.log("🚀 RUNNING PRO");
 });
+
+server.on("upgrade", (req, socket, head) => {
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit("connection", ws, req);
+  });
+});
+
+wss.on("connection", (ws) => {
+  clients.push(ws);
+
+  ws.on("close", () => {
+    clients = clients.filter(c => c !== ws);
+  });
+});
+
+// broadcast
+function broadcast() {
+  const data = {};
+
+  for (const id in channels) {
+    data[id] = {
+      active: !!ffmpegProcesses[id],
+      viewers: viewers[id] || 0
+    };
+  }
+
+  clients.forEach(ws => {
+    if (ws.readyState === 1) {
+      ws.send(JSON.stringify(data));
+    }
+  });
+}
+
+setInterval(broadcast, 2000);
