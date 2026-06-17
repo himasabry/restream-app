@@ -195,15 +195,21 @@ app.get("/status", (req, res) => {
 
 // 📡 Dashboard Modern UI
 app.get("/dashboard", (req, res) => {
+
 res.send(`
+
 <!DOCTYPE html>
-<html>
+
+<html dir="rtl">
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="UTF-8">
 
-<title>Super Dashboard</title>
+<title>لوحة إعادة البث</title>
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
 
 <style>
 
@@ -215,117 +221,314 @@ font-family:Arial;
 }
 
 body{
-background:#0b1020;
+
+background:
+linear-gradient(
+180deg,
+#040915,
+#091325
+);
+
 color:white;
-padding:30px;
-}
 
-.top{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:30px;
-}
-
-.title{
-font-size:34px;
-font-weight:bold;
-}
-
-.stats{
-display:flex;
-gap:15px;
-}
-
-.stat{
-background:#151d35;
 padding:18px;
-border-radius:15px;
-min-width:150px;
+
+}
+
+.wrap{
+
+max-width:1500px;
+
+margin:auto;
+
 }
 
 .grid{
+
 display:grid;
+
 grid-template-columns:
-repeat(auto-fill,minmax(300px,1fr));
+430px 1fr;
 
 gap:20px;
+
+}
+
+.panel{
+
+background:
+#0f1730;
+
+padding:20px;
+
+border-radius:25px;
+
+border:1px solid #1d2b56;
+
+}
+
+.title{
+
+font-size:34px;
+
+font-weight:bold;
+
+margin-bottom:20px;
+
+}
+
+.menu{
+
+display:flex;
+
+flex-direction:column;
+
+gap:14px;
+
+}
+
+.menu button{
+
+height:72px;
+
+border:none;
+
+border-radius:18px;
+
+font-size:24px;
+
+cursor:pointer;
+
+color:white;
+
+}
+
+.clear{
+background:#3b3520;
+}
+
+.settings{
+background:#151f3f;
+}
+
+.import{
+background:#151f3f;
+}
+
+.add{
+background:#3d83ff;
+}
+
+.exit{
+background:#341827;
+}
+
+.stats{
+
+display:grid;
+
+grid-template-columns:
+1fr 1fr;
+
+gap:20px;
+
+margin-top:20px;
+
 }
 
 .card{
 
-background:
+background:#101938;
 
-linear-gradient(
-145deg,
-#141d36,
-#0c1326
-);
+padding:30px;
 
-border-radius:18px;
+border-radius:24px;
 
-padding:20px;
+min-height:180px;
 
-border:1px solid #222;
-
-transition:.2s;
-}
-
-.card:hover{
-transform:translateY(-3px);
-}
-
-.live{
-color:#00ff88;
-}
-
-.off{
-color:#ff4444;
-}
-
-.view{
-color:#66ccff;
-margin-top:10px;
-}
-
-.btns{
-margin-top:20px;
 display:flex;
-gap:10px;
+
+justify-content:space-between;
+
+align-items:center;
+
 }
 
-button{
+.big{
+
+font-size:60px;
+
+font-weight:bold;
+
+}
+
+.box{
+
+background:#101938;
+
+margin-top:20px;
+
+padding:25px;
+
+border-radius:24px;
+
+}
+
+.copy{
+
+margin-top:20px;
+
+background:#3d83ff;
+
+padding:15px;
 
 border:none;
 
-padding:12px;
+border-radius:15px;
 
-border-radius:12px;
+color:white;
+
+width:100%;
+
+font-size:22px;
+
+cursor:pointer;
+
+}
+
+.channels{
+
+margin-top:20px;
+
+display:flex;
+
+gap:12px;
+
+overflow:auto;
+
+}
+
+.tag{
+
+background:#121c3f;
+
+padding:14px 22px;
+
+border-radius:999px;
+
+white-space:nowrap;
+
+}
+
+.active{
+
+background:#3d83ff;
+}
+
+.liveGrid{
+
+margin-top:25px;
+
+display:grid;
+
+grid-template-columns:
+repeat(auto-fill,minmax(300px,1fr));
+
+gap:18px;
+
+}
+
+.liveCard{
+
+background:#101938;
+
+padding:22px;
+
+border-radius:20px;
+
+}
+
+.online{
+
+color:#00ff88;
+}
+
+.offline{
+
+color:#ff5555;
+}
+
+.btns{
+
+display:flex;
+
+gap:10px;
+
+margin-top:18px;
+
+}
+
+a{
+
+flex:1;
+
+}
+
+.action{
+
+width:100%;
+
+border:none;
+
+padding:14px;
+
+border-radius:14px;
 
 color:white;
 
 cursor:pointer;
 
-width:100%;
-
-font-size:15px;
-
 }
 
 .start{
-background:#00aa55;
+
+background:#1da74f;
+
 }
 
 .stop{
-background:#dd3333;
+
+background:#d53d3d;
+
 }
 
-.start:hover{
-opacity:.9;
+.viewer{
+
+margin-top:15px;
+
+font-size:18px;
+
+color:#6dbfff;
+
 }
 
-.stop:hover{
-opacity:.9;
+.total{
+
+margin-top:10px;
+
+color:#ffcc66;
+
+}
+
+@media(max-width:900px){
+
+.grid{
+
+grid-template-columns:
+1fr;
+
+}
+
 }
 
 </style>
@@ -334,51 +537,132 @@ opacity:.9;
 
 <body>
 
-<div class="top">
+<div class="wrap">
+
+<div class="grid">
+
+<div class="panel">
 
 <div class="title">
-📡 Super Dashboard
+
+📡 لوحة إعادة بث القنوات
+
 </div>
+
+<div class="menu">
+
+<button class="clear">
+🗑️ تفريغ الكاش والـ FFmpeg
+</button>
+
+<button class="settings">
+⚙️ الإعدادات
+</button>
+
+<button class="import">
+↪ استيراد M3U
+</button>
+
+<button class="add">
+＋ إضافة قناة
+</button>
+
+<button class="exit">
+↩ خروج
+</button>
+
+</div>
+
+</div>
+
+
+<div>
 
 <div class="stats">
 
-<div class="stat">
-LIVE
-<br>
-<span id="live">
-0
-</span>
+<div class="card">
+
+<div>
+
+القنوات النشطة حالياً
+
 </div>
 
-<div class="stat">
-VIEWERS
-<br>
-<span id="total">
+<div class="big" id="live">
+
 0
-</span>
+
 </div>
+
+</div>
+
+<div class="card">
+
+<div>
+
+إجمالي القنوات
+
+</div>
+
+<div class="big">
+
+${Object.keys(channels).length}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="box">
+
+رابط ملف M3U الكامل
+
+<button class="copy">
+
+نسخ الرابط
+
+</button>
+
+</div>
+
+<div class="channels">
+
+<div class="tag active">
+
+الكل
 
 </div>
 
 </div>
 
 <div
-class="grid"
+class="liveGrid"
 id="list">
+
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 <script>
 
+let totalViews={};
+
 async function load(){
 
-const res=
+const r=
 await fetch("/status");
 
 const data=
-await res.json();
+await r.json();
 
 const box=
-document.getElementById(
+document
+.getElementById(
 "list"
 );
 
@@ -386,29 +670,34 @@ box.innerHTML="";
 
 let live=0;
 
-let total=0;
-
 Object
 .keys(data)
 .forEach(ch=>{
 
 const d=data[ch];
 
+if(!totalViews[ch])
+totalViews[ch]=0;
+
+totalViews[ch]+=
+d.viewers;
+
 if(d.active)
 live++;
 
-total+=
-d.viewers;
-
 box.innerHTML+=\`
 
-<div class="card">
+<div class="liveCard">
 
 <h2>
 \${ch}
 </h2>
 
-<h3 class="\${d.active?'live':'off'}">
+<h3 class="
+\${d.active
+?'online'
+:'offline'}
+">
 
 \${d.active
 ?'🟢 LIVE'
@@ -416,26 +705,43 @@ box.innerHTML+=\`
 
 </h3>
 
-<div class="view">
+<div class="viewer">
 
-👁️
+👁️ المشاهدين الآن:
+<b>
+
 \${d.viewers}
 
-مشاهد
+</b>
+
+</div>
+
+<div class="total">
+
+📈 إجمالي المشاهدات:
+<b>
+
+\${totalViews[ch]}
+
+</b>
 
 </div>
 
 <div class="btns">
 
 <a href="/start?id=\${ch}">
-<button class="start">
-START
+<button class="action start">
+
+تشغيل
+
 </button>
 </a>
 
 <a href="/stop?id=\${ch}">
-<button class="stop">
-STOP
+<button class="action stop">
+
+إيقاف
+
 </button>
 </a>
 
@@ -454,13 +760,6 @@ document
 .innerText=
 live;
 
-document
-.getElementById(
-"total"
-)
-.innerText=
-total;
-
 }
 
 load();
@@ -477,8 +776,8 @@ load,
 </html>
 
 `);
-});
 
+});
 
 // 🚀 Health check
 app.get("/health", (req, res) => {
