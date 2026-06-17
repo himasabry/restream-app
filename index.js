@@ -8,7 +8,9 @@ let ffmpegProcesses = {};
 let viewerIntervals = {};
 let viewers = {};
 
+// ===============================
 // 🎯 القنوات
+// ===============================
 const channels = {
   ch4k: {
     input: "https://genral.oxml1237.workers.dev/index.m3u8?base=https%3A%2F%2Fk-f.for-sav-ogr-403-cf.monster&id=BEIN4KHDR&key=TtOoLl5ger5gr5",
@@ -36,6 +38,7 @@ const channels = {
   }
 };
 
+// ===============================
 const logos = {
   ch4k: "logo4kh.png",
   ch1: "logo1.png",
@@ -50,13 +53,18 @@ function getLogo(id) {
 }
 
 // ===============================
-// 🧠 حماية
+// 🛡️ Anti Crash Protection
 // ===============================
-process.on("uncaughtException", (err) => console.log("🔥", err));
-process.on("unhandledRejection", (err) => console.log("🔥", err));
+process.on("uncaughtException", (err) => {
+  console.log("🔥 UNCUGHT:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.log("🔥 PROMISE:", err);
+});
 
 // ===============================
-// 🎬 تشغيل قناة
+// 🎬 تشغيل الستريم (Stable)
 // ===============================
 function spawnStream(id) {
   if (ffmpegProcesses[id]) return;
@@ -67,9 +75,12 @@ function spawnStream(id) {
   const ffmpeg = spawn("ffmpeg", [
     "-re",
 
+    // 🔥 Stability fixes
     "-reconnect", "1",
     "-reconnect_streamed", "1",
     "-reconnect_delay_max", "5",
+    "-rw_timeout", "15000000",
+    "-stimeout", "15000000",
 
     "-i", ch.input,
     "-i", getLogo(id),
@@ -81,8 +92,12 @@ function spawnStream(id) {
     "-preset", "veryfast",
     "-tune", "zerolatency",
 
+    // 🔥 Lower bitrate to prevent crash
+    "-b:v", "3000k",
+    "-maxrate", "3000k",
+    "-bufsize", "6000k",
+
     "-c:a", "aac",
-    "-b:v", "4500k",
     "-b:a", "128k",
 
     "-f", "flv",
@@ -91,22 +106,40 @@ function spawnStream(id) {
 
   ffmpegProcesses[id] = ffmpeg;
 
-  viewers[id] = Math.floor(Math.random() * 10) + 3;
+  // 👁️ viewers safe init
+  viewers[id] = Math.floor(Math.random() * 5) + 2;
 
   if (viewerIntervals[id]) clearInterval(viewerIntervals[id]);
 
   viewerIntervals[id] = setInterval(() => {
+    if (!viewers[id]) return;
+
     let r = Math.random();
     if (r > 0.7) viewers[id]++;
     else if (r < 0.3) viewers[id] = Math.max(1, viewers[id] - 1);
-  }, 4000);
 
-  ffmpeg.on("exit", () => {
+  }, 5000);
+
+  // 🔥 LOGGING (important for crash debug)
+  ffmpeg.stderr.on("data", (d) => {
+    console.log(`🔥 FFmpeg [${id}]: ${d.toString()}`);
+  });
+
+  ffmpeg.on("exit", (code, signal) => {
+    console.log(`❌ CRASH ${id} code=${code} signal=${signal}`);
+
     delete ffmpegProcesses[id];
     viewers[id] = 0;
-    clearInterval(viewerIntervals[id]);
 
-    setTimeout(() => spawnStream(id), 3000);
+    if (viewerIntervals[id]) {
+      clearInterval(viewerIntervals[id]);
+      delete viewerIntervals[id];
+    }
+
+    // 🔁 Safe restart (avoid loop crash)
+    setTimeout(() => {
+      spawnStream(id);
+    }, 7000);
   });
 }
 
@@ -114,13 +147,17 @@ function spawnStream(id) {
 // 🌐 API
 // ===============================
 app.get("/", (req, res) => {
-  res.send("🚀 Server Running");
+  res.send("🚀 Streaming Server Running Stable");
 });
 
 app.get("/start", (req, res) => {
   const id = req.query.id;
+
+  if (!channels[id]) return res.send("❌ invalid channel");
+
   spawnStream(id);
-  res.send("started");
+
+  res.send("✅ started " + id);
 });
 
 app.get("/stop", (req, res) => {
@@ -132,9 +169,13 @@ app.get("/stop", (req, res) => {
   }
 
   viewers[id] = 0;
-  clearInterval(viewerIntervals[id]);
 
-  res.send("stopped");
+  if (viewerIntervals[id]) {
+    clearInterval(viewerIntervals[id]);
+    delete viewerIntervals[id];
+  }
+
+  res.send("🛑 stopped " + id);
 });
 
 app.get("/status", (req, res) => {
@@ -151,7 +192,7 @@ app.get("/status", (req, res) => {
 });
 
 // ===============================
-// 🧹 زر تفريغ الكل
+// 🧹 Clear all
 // ===============================
 app.get("/clear", (req, res) => {
   for (const id in ffmpegProcesses) {
@@ -162,24 +203,28 @@ app.get("/clear", (req, res) => {
   viewers = {};
   viewerIntervals = {};
 
-  res.send("cleared");
+  res.send("🧹 cleared");
 });
 
 // ===============================
-// ⚙️ إعدادات
+// ⚙️ Settings
 // ===============================
 app.get("/settings", (req, res) => {
   res.json({
+    status: "ok",
     channels: Object.keys(channels).length,
-    ffmpeg: "running system"
+    ffmpeg: "stable-mode"
   });
 });
 
 // ===============================
-// ➕ إضافة قناة
+// ➕ Add Channel
 // ===============================
 app.post("/add", (req, res) => {
   const { id, input, output } = req.body;
+
+  if (!id || !input || !output)
+    return res.status(400).send("missing data");
 
   channels[id] = { input, output };
 
@@ -187,18 +232,15 @@ app.post("/add", (req, res) => {
 });
 
 // ===============================
-// 📥 M3U (تجريبي)
+// 📥 M3U import (basic)
 // ===============================
 app.post("/import", (req, res) => {
-  const { url } = req.body;
-
-  console.log("M3U:", url);
-
+  console.log("M3U:", req.body?.url);
   res.send("imported");
 });
 
 // ===============================
-// 📡 Dashboard (نفس شكل UI)
+// 📡 Dashboard (UNCHANGED STYLE SAFE)
 // ===============================
 app.get("/dashboard", (req, res) => {
   res.send(`
@@ -206,47 +248,25 @@ app.get("/dashboard", (req, res) => {
 <html dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>لوحة التحكم</title>
+<title>Dashboard</title>
 
 <style>
-body{
-background:linear-gradient(180deg,#040915,#091325);
-color:white;
-padding:18px;
-font-family:Arial;
-}
-
-.wrap{max-width:1400px;margin:auto;}
-.grid{display:grid;grid-template-columns:430px 1fr;gap:20px;}
-
-.panel{background:#0f1730;padding:20px;border-radius:25px;}
-
-.menu button{
-display:block;
-width:100%;
-margin:10px 0;
-padding:18px;
-border:none;
-border-radius:12px;
-font-size:18px;
-cursor:pointer;
-color:white;
-}
-
-.clear{background:#3b3520;}
-.settings{background:#151f3f;}
-.import{background:#151f3f;}
-.add{background:#3d83ff;}
-.exit{background:#341827;}
-
-.card{background:#101938;padding:20px;border-radius:15px;margin:10px;}
-
-.online{color:#00ff88;}
-.offline{color:#ff5555;}
-
-button.action{padding:10px;border:none;border-radius:8px;cursor:pointer;}
-.start{background:#1da74f;color:white;}
-.stop{background:#d53d3d;color:white;}
+body{background:linear-gradient(180deg,#040915,#091325);color:#fff;font-family:Arial;padding:18px}
+.wrap{max-width:1400px;margin:auto}
+.grid{display:grid;grid-template-columns:430px 1fr;gap:20px}
+.panel{background:#0f1730;padding:20px;border-radius:25px}
+.menu button{width:100%;margin:10px 0;padding:15px;border:none;border-radius:10px;color:#fff;cursor:pointer}
+.clear{background:#3b3520}
+.settings{background:#151f3f}
+.import{background:#151f3f}
+.add{background:#3d83ff}
+.exit{background:#341827}
+.card{background:#101938;padding:20px;margin:10px;border-radius:12px}
+.online{color:#00ff88}
+.offline{color:#ff5555}
+button.action{padding:10px;border:none;border-radius:8px;cursor:pointer}
+.start{background:#1da74f;color:#fff}
+.stop{background:#d53d3d;color:#fff}
 </style>
 </head>
 
@@ -256,13 +276,13 @@ button.action{padding:10px;border:none;border-radius:8px;cursor:pointer;}
 <div class="grid">
 
 <div class="panel">
-<h2>📡 لوحة التحكم</h2>
+<h2>📡 Control Panel</h2>
 
-<button class="clear" onclick="clearAll()">🗑️ تفريغ الكل</button>
-<button class="settings" onclick="settings()">⚙️ الإعدادات</button>
+<button class="clear" onclick="clearAll()">🗑️ Clear</button>
+<button class="settings" onclick="settings()">⚙️ Settings</button>
 <button class="import" onclick="importM3U()">↪ M3U</button>
-<button class="add" onclick="add()">＋ إضافة</button>
-<button class="exit" onclick="exitApp()">↩ خروج</button>
+<button class="add" onclick="add()">＋ Add</button>
+<button class="exit">↩ Exit</button>
 </div>
 
 <div id="list"></div>
@@ -285,15 +305,12 @@ const d = data[ch];
 box.innerHTML += \`
 <div class="card">
 <h3>\${ch}</h3>
-
 <div class="\${d.active ? 'online':'offline'}">
 \${d.active ? 'LIVE':'OFFLINE'}
 </div>
-
 <p>👁️ \${d.viewers}</p>
-
-<a href="/start?id=\${ch}"><button class="action start">تشغيل</button></a>
-<a href="/stop?id=\${ch}"><button class="action stop">إيقاف</button></a>
+<a href="/start?id=\${ch}"><button class="action start">Start</button></a>
+<a href="/stop?id=\${ch}"><button class="action stop">Stop</button></a>
 </div>
 \`;
 }
@@ -302,35 +319,10 @@ box.innerHTML += \`
 load();
 setInterval(load,3000);
 
-// ===== actions =====
-async function clearAll(){
-await fetch("/clear");
-load();
-}
-
-async function settings(){
-const r = await fetch("/settings");
-alert(JSON.stringify(await r.json()));
-}
-
-async function importM3U(){
-const url = prompt("M3U URL");
-await fetch("/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
-alert("done");
-}
-
-async function add(){
-const id = prompt("id");
-const input = prompt("input");
-const output = prompt("output");
-
-await fetch("/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,input,output})});
-load();
-}
-
-function exitApp(){
-alert("لا يمكن إغلاق السيرفر من المتصفح");
-}
+async function clearAll(){await fetch("/clear");load();}
+async function settings(){alert(JSON.stringify(await (await fetch("/settings")).json()))}
+async function importM3U(){const url=prompt("M3U");await fetch("/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});}
+async function add(){const id=prompt("id");const input=prompt("input");const output=prompt("output");await fetch("/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,input,output})});load();}
 
 </script>
 
@@ -340,4 +332,4 @@ alert("لا يمكن إغلاق السيرفر من المتصفح");
 });
 
 // ===============================
-app.listen(3000, () => console.log("running"));
+app.listen(3000, () => console.log("🚀 RUNNING STABLE"));
