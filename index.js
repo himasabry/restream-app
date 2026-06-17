@@ -98,7 +98,7 @@ function spawnStream(id) {
     "-i", getLogo(id),
 
     "-filter_complex",
-    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=220:-1[logo];[base][logo]overlay=W-w-15:15",
+    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=3100:-1[logo];[base][logo]overlay=W-w-15:15",
 
     "-c:v", "libx264",
     "-preset", "veryfast",
@@ -244,120 +244,148 @@ app.get("/dashboard", (req, res) => {
 <html dir="rtl">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard PRO</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#070b1a;color:white}
+body{
+margin:0;
+font-family:Arial;
+background:#070b1a;
+color:#fff;
+}
 
-.top{
-padding:15px;
+.header{
+padding:20px;
 background:#0f1730;
 display:flex;
 justify-content:space-between;
 align-items:center;
+border-bottom:1px solid #1c2a55;
+}
+
+.header h2{
+margin:0;
+font-size:20px;
 }
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
 gap:15px;
 padding:15px;
 }
 
 .card{
 background:#101938;
+border:1px solid #1d2b56;
+border-radius:15px;
 padding:15px;
-border-radius:12px;
+transition:0.2s;
+}
+
+.card:hover{
+transform:scale(1.02);
+}
+
+.status{
+font-weight:bold;
+margin:10px 0;
 }
 
 .online{color:#00ff88}
-.offline{color:#ff5555}
+.offline{color:#ff4d4d}
 
-button{
-padding:10px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-margin:5px;
+.meta{
+color:#aaa;
+font-size:14px;
+margin:5px 0;
 }
 
-.start{background:#1da74f;color:white}
-.stop{background:#d53d3d;color:white}
-.action{background:#3d83ff;color:white}
+.btns{
+display:flex;
+gap:10px;
+margin-top:10px;
+}
+
+button{
+flex:1;
+padding:10px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.start{background:#1db954;color:#fff}
+.stop{background:#e74c3c;color:#fff}
+
+.footer{
+text-align:center;
+padding:10px;
+color:#666;
+font-size:12px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="top">
-<h2>📡 Dashboard PRO</h2>
-
-<div>
-<button onclick="clearAll()" class="action">🧹 Clear</button>
-<button onclick="add()" class="action">＋ Add</button>
-<button onclick="settings()" class="action">⚙ Settings</button>
-</div>
+<div class="header">
+<h2>📡 Stream Dashboard PRO</h2>
+<div>⚡ Live Control Panel</div>
 </div>
 
 <div id="grid" class="grid"></div>
 
+<div class="footer">
+Auto refresh every 2 seconds
+</div>
+
 <script>
 
-let ws = new WebSocket(location.origin.replace("http","ws"));
+async function load(){
+const res = await fetch("/status");
+const data = await res.json();
 
-ws.onmessage = (msg) => {
-  render(JSON.parse(msg.data));
-};
+const grid = document.getElementById("grid");
+grid.innerHTML = "";
 
-function render(data){
-  const box = document.getElementById("grid");
-  box.innerHTML = "";
+for(const id in data){
+const ch = data[id];
 
-  for(const ch in data){
-    const d = data[ch];
+grid.innerHTML += \`
+<div class="card">
 
-    box.innerHTML += \`
-      <div class="card">
-        <h2>\${ch}</h2>
+<h3>📺 \${id}</h3>
 
-        <div class="\${d.active ? 'online':'offline'}">
-          \${d.active ? '🟢 LIVE' : '🔴 OFFLINE'}
-        </div>
+<div class="status \${ch.active ? 'online':'offline'}">
+\${ch.active ? '🟢 LIVE' : '🔴 OFFLINE'}
+</div>
 
-        <p>👁️ \${d.viewers}</p>
+<div class="meta">
+👁️ Viewers: <b>\${ch.viewers}</b>
+</div>
 
-        <a href="/start?id=\${ch}">
-          <button class="start">Start</button>
-        </a>
+<div class="btns">
+<a href="/start?id=\${id}">
+<button class="start">▶ Start</button>
+</a>
 
-        <a href="/stop?id=\${ch}">
-          <button class="stop">Stop</button>
-        </a>
-      </div>
-    \`;
-  }
+<a href="/stop?id=\${id}">
+<button class="stop">⛔ Stop</button>
+</a>
+</div>
+
+</div>
+\`;
 }
 
-async function clearAll(){
-  await fetch("/clear");
 }
 
-async function add(){
-  const id = prompt("ID");
-  const input = prompt("Input");
-  const output = prompt("Output");
+load();
+setInterval(load, 2000);
 
-  await fetch("/add",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({id,input,output})
-  });
-}
-
-async function settings(){
-  const r = await fetch("/settings");
-  alert(JSON.stringify(await r.json(),null,2));
-}
 </script>
 
 </body>
