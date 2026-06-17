@@ -24,7 +24,7 @@ let viewers = {};
 const channels = {
   ch4k: {
     input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255224.m3u8",
-    output: "rtmp://rtmp.livepeer.com/live/a4be-dmef-x7d9-4kme"
+    output: "rtmp://ssh101.bozztv.com:1935/ssh101/max4khdr"
   },
   ch1: {
     input: "https://max.pl4k.workers.dev/max14k/index.m3u8",
