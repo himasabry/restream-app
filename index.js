@@ -2,7 +2,6 @@ import express from "express";
 import { spawn } from "child_process";
 
 const app = express();
-app.use(express.json());
 
 let ffmpegProcesses = {};
 let viewerIntervals = {};
@@ -53,18 +52,18 @@ function getLogo(id) {
 }
 
 // ===============================
-// 🛡️ Anti Crash Protection
+// 🛡️ حماية السيرفر
 // ===============================
 process.on("uncaughtException", (err) => {
-  console.log("🔥 UNCUGHT:", err);
+  console.log("🔥 ERROR:", err.message);
 });
 
 process.on("unhandledRejection", (err) => {
-  console.log("🔥 PROMISE:", err);
+  console.log("🔥 PROMISE ERROR:", err);
 });
 
 // ===============================
-// 🎬 تشغيل الستريم (Stable)
+// 🎬 تشغيل القناة (FIXED)
 // ===============================
 function spawnStream(id) {
   if (ffmpegProcesses[id]) return;
@@ -72,30 +71,35 @@ function spawnStream(id) {
   const ch = channels[id];
   if (!ch) return;
 
+  console.log("▶ starting:", id);
+
   const ffmpeg = spawn("ffmpeg", [
     "-re",
 
-    // 🔥 Stability fixes
+    // 🔥 Stability
     "-reconnect", "1",
     "-reconnect_streamed", "1",
     "-reconnect_delay_max", "5",
     "-rw_timeout", "15000000",
-    "-stimeout", "15000000",
 
     "-i", ch.input,
     "-i", getLogo(id),
 
+    // 🔥 FIXED overlay (no huge scale)
     "-filter_complex",
-    "[0:v]scale=1920:1080[base];[1:v]scale=300:-1[logo];[base][logo]overlay=W-w-10:10",
+    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=220:-1[logo];[base][logo]overlay=W-w-15:15",
 
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
 
-    // 🔥 Lower bitrate to prevent crash
-    "-b:v", "3000k",
-    "-maxrate", "3000k",
-    "-bufsize", "6000k",
+    // 🔥 Lower bitrate to avoid Railway crash
+    "-b:v", "2200k",
+    "-maxrate", "2200k",
+    "-bufsize", "3500k",
+
+    "-r", "25",
+    "-g", "50",
 
     "-c:a", "aac",
     "-b:a", "128k",
@@ -106,7 +110,6 @@ function spawnStream(id) {
 
   ffmpegProcesses[id] = ffmpeg;
 
-  // 👁️ viewers safe init
   viewers[id] = Math.floor(Math.random() * 5) + 2;
 
   if (viewerIntervals[id]) clearInterval(viewerIntervals[id]);
@@ -114,19 +117,17 @@ function spawnStream(id) {
   viewerIntervals[id] = setInterval(() => {
     if (!viewers[id]) return;
 
-    let r = Math.random();
+    const r = Math.random();
     if (r > 0.7) viewers[id]++;
     else if (r < 0.3) viewers[id] = Math.max(1, viewers[id] - 1);
-
   }, 5000);
 
-  // 🔥 LOGGING (important for crash debug)
   ffmpeg.stderr.on("data", (d) => {
-    console.log(`🔥 FFmpeg [${id}]: ${d.toString()}`);
+    console.log(`[${id}] ${d.toString()}`);
   });
 
-  ffmpeg.on("exit", (code, signal) => {
-    console.log(`❌ CRASH ${id} code=${code} signal=${signal}`);
+  ffmpeg.on("exit", (code) => {
+    console.log(`❌ ${id} exited ${code}`);
 
     delete ffmpegProcesses[id];
     viewers[id] = 0;
@@ -136,10 +137,12 @@ function spawnStream(id) {
       delete viewerIntervals[id];
     }
 
-    // 🔁 Safe restart (avoid loop crash)
+    // 🔥 prevent crash loop
     setTimeout(() => {
-      spawnStream(id);
-    }, 7000);
+      if (!ffmpegProcesses[id]) {
+        spawnStream(id);
+      }
+    }, 8000);
   });
 }
 
@@ -147,7 +150,7 @@ function spawnStream(id) {
 // 🌐 API
 // ===============================
 app.get("/", (req, res) => {
-  res.send("🚀 Streaming Server Running Stable");
+  res.send("🚀 Streaming Server Running Stable FIXED");
 });
 
 app.get("/start", (req, res) => {
@@ -157,7 +160,7 @@ app.get("/start", (req, res) => {
 
   spawnStream(id);
 
-  res.send("✅ started " + id);
+  res.send("started " + id);
 });
 
 app.get("/stop", (req, res) => {
@@ -175,7 +178,7 @@ app.get("/stop", (req, res) => {
     delete viewerIntervals[id];
   }
 
-  res.send("🛑 stopped " + id);
+  res.send("stopped " + id);
 });
 
 app.get("/status", (req, res) => {
@@ -192,7 +195,7 @@ app.get("/status", (req, res) => {
 });
 
 // ===============================
-// 🧹 Clear all
+// 🧹 clear system
 // ===============================
 app.get("/clear", (req, res) => {
   for (const id in ffmpegProcesses) {
@@ -203,28 +206,31 @@ app.get("/clear", (req, res) => {
   viewers = {};
   viewerIntervals = {};
 
-  res.send("🧹 cleared");
+  res.send("cleared");
 });
 
 // ===============================
-// ⚙️ Settings
+// ⚙️ settings
 // ===============================
 app.get("/settings", (req, res) => {
   res.json({
     status: "ok",
     channels: Object.keys(channels).length,
-    ffmpeg: "stable-mode"
+    system: "stable-mode"
   });
 });
 
 // ===============================
-// ➕ Add Channel
+// ➕ add channel
 // ===============================
+app.use(express.json());
+
 app.post("/add", (req, res) => {
   const { id, input, output } = req.body;
 
-  if (!id || !input || !output)
+  if (!id || !input || !output) {
     return res.status(400).send("missing data");
+  }
 
   channels[id] = { input, output };
 
@@ -232,7 +238,7 @@ app.post("/add", (req, res) => {
 });
 
 // ===============================
-// 📥 M3U import (basic)
+// 📥 M3U (basic)
 // ===============================
 app.post("/import", (req, res) => {
   console.log("M3U:", req.body?.url);
@@ -240,96 +246,10 @@ app.post("/import", (req, res) => {
 });
 
 // ===============================
-// 📡 Dashboard (UNCHANGED STYLE SAFE)
+// 🚀 start server (IMPORTANT)
 // ===============================
-app.get("/dashboard", (req, res) => {
-  res.send(`
-<!DOCTYPE html>
-<html dir="rtl">
-<head>
-<meta charset="UTF-8">
-<title>Dashboard</title>
+const port = process.env.PORT || 3000;
 
-<style>
-body{background:linear-gradient(180deg,#040915,#091325);color:#fff;font-family:Arial;padding:18px}
-.wrap{max-width:1400px;margin:auto}
-.grid{display:grid;grid-template-columns:430px 1fr;gap:20px}
-.panel{background:#0f1730;padding:20px;border-radius:25px}
-.menu button{width:100%;margin:10px 0;padding:15px;border:none;border-radius:10px;color:#fff;cursor:pointer}
-.clear{background:#3b3520}
-.settings{background:#151f3f}
-.import{background:#151f3f}
-.add{background:#3d83ff}
-.exit{background:#341827}
-.card{background:#101938;padding:20px;margin:10px;border-radius:12px}
-.online{color:#00ff88}
-.offline{color:#ff5555}
-button.action{padding:10px;border:none;border-radius:8px;cursor:pointer}
-.start{background:#1da74f;color:#fff}
-.stop{background:#d53d3d;color:#fff}
-</style>
-</head>
-
-<body>
-
-<div class="wrap">
-<div class="grid">
-
-<div class="panel">
-<h2>📡 Control Panel</h2>
-
-<button class="clear" onclick="clearAll()">🗑️ Clear</button>
-<button class="settings" onclick="settings()">⚙️ Settings</button>
-<button class="import" onclick="importM3U()">↪ M3U</button>
-<button class="add" onclick="add()">＋ Add</button>
-<button class="exit">↩ Exit</button>
-</div>
-
-<div id="list"></div>
-
-</div>
-</div>
-
-<script>
-
-async function load(){
-const r = await fetch("/status");
-const data = await r.json();
-
-const box = document.getElementById("list");
-box.innerHTML = "";
-
-for(const ch in data){
-const d = data[ch];
-
-box.innerHTML += \`
-<div class="card">
-<h3>\${ch}</h3>
-<div class="\${d.active ? 'online':'offline'}">
-\${d.active ? 'LIVE':'OFFLINE'}
-</div>
-<p>👁️ \${d.viewers}</p>
-<a href="/start?id=\${ch}"><button class="action start">Start</button></a>
-<a href="/stop?id=\${ch}"><button class="action stop">Stop</button></a>
-</div>
-\`;
-}
-}
-
-load();
-setInterval(load,3000);
-
-async function clearAll(){await fetch("/clear");load();}
-async function settings(){alert(JSON.stringify(await (await fetch("/settings")).json()))}
-async function importM3U(){const url=prompt("M3U");await fetch("/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});}
-async function add(){const id=prompt("id");const input=prompt("input");const output=prompt("output");await fetch("/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,input,output})});load();}
-
-</script>
-
-</body>
-</html>
-`);
+app.listen(port, () => {
+  console.log("🚀 Server running on port", port);
 });
-
-// ===============================
-app.listen(3000, () => console.log("🚀 RUNNING STABLE"));
