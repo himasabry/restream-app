@@ -2,11 +2,11 @@ import express from "express";
 import { spawn } from "child_process";
 
 const app = express();
+app.use(express.json());
 
 let ffmpegProcesses = {};
 let viewerIntervals = {};
 let viewers = {};
-let totalViews = {};
 
 // 🎯 القنوات
 const channels = {
@@ -49,118 +49,80 @@ function getLogo(id) {
   return logos[id] || "logo.png";
 }
 
-// 🛡️ حماية
-process.on("uncaughtException", (err) => console.log("🔥 Error:", err));
-process.on("unhandledRejection", (err) => console.log("🔥 Rejection:", err));
+// ===============================
+// 🧠 حماية
+// ===============================
+process.on("uncaughtException", (err) => console.log("🔥", err));
+process.on("unhandledRejection", (err) => console.log("🔥", err));
 
 // ===============================
-// 🔥 تشغيل الستريم (أساسي)
+// 🎬 تشغيل قناة
 // ===============================
 function spawnStream(id) {
-  const channel = channels[id];
-  if (!channel) return;
-
   if (ffmpegProcesses[id]) return;
 
-  const logo = getLogo(id);
+  const ch = channels[id];
+  if (!ch) return;
 
   const ffmpeg = spawn("ffmpeg", [
     "-re",
 
-    // 🔥 حل مشكلة التقطيع
     "-reconnect", "1",
     "-reconnect_streamed", "1",
     "-reconnect_delay_max", "5",
-    "-rw_timeout", "15000000",
 
-    "-fflags", "+genpts+discardcorrupt",
-    "-flags", "low_delay",
-
-    "-i", channel.input,
-    "-i", logo,
+    "-i", ch.input,
+    "-i", getLogo(id),
 
     "-filter_complex",
-    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=-1:300[logo];[base][logo]overlay=W-w-10:10",
+    "[0:v]scale=1920:1080[base];[1:v]scale=300:-1[logo];[base][logo]overlay=W-w-10:10",
 
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
 
-    "-b:v", "4500k",
-    "-maxrate", "5000k",
-    "-bufsize", "10000k",
-
-    "-r", "25",
-    "-g", "50",
-
     "-c:a", "aac",
-    "-b:a", "160k",
-    "-ar", "48000",
+    "-b:v", "4500k",
+    "-b:a", "128k",
 
     "-f", "flv",
-    channel.output
+    ch.output
   ]);
 
   ffmpegProcesses[id] = ffmpeg;
 
-  // 👁️ viewers init
   viewers[id] = Math.floor(Math.random() * 10) + 3;
 
   if (viewerIntervals[id]) clearInterval(viewerIntervals[id]);
 
   viewerIntervals[id] = setInterval(() => {
-    if (!viewers[id]) return;
-
     let r = Math.random();
     if (r > 0.7) viewers[id]++;
     else if (r < 0.3) viewers[id] = Math.max(1, viewers[id] - 1);
-
   }, 4000);
 
-  ffmpeg.stderr.on("data", (d) => {
-    console.log(`[${id}] ${d.toString()}`);
-  });
-
-  ffmpeg.on("exit", (code) => {
-    console.log(`❌ ${id} exited ${code}`);
-
+  ffmpeg.on("exit", () => {
     delete ffmpegProcesses[id];
     viewers[id] = 0;
+    clearInterval(viewerIntervals[id]);
 
-    if (viewerIntervals[id]) {
-      clearInterval(viewerIntervals[id]);
-      delete viewerIntervals[id];
-    }
-
-    // 🔥 Auto restart
-    setTimeout(() => {
-      console.log(`🔁 restarting ${id}`);
-      spawnStream(id);
-    }, 3000);
+    setTimeout(() => spawnStream(id), 3000);
   });
 }
 
 // ===============================
-// 🌐 Routes
+// 🌐 API
 // ===============================
-
 app.get("/", (req, res) => {
-  res.send("🚀 Restream System Running FINAL FIXED");
+  res.send("🚀 Server Running");
 });
 
-// ▶️ Start
 app.get("/start", (req, res) => {
   const id = req.query.id;
-
-  if (!id) return res.send("❌ missing id");
-  if (!channels[id]) return res.send("❌ channel not found");
-
   spawnStream(id);
-
-  res.send(`✅ Channel ${id} started`);
+  res.send("started");
 });
 
-// 🛑 Stop
 app.get("/stop", (req, res) => {
   const id = req.query.id;
 
@@ -170,16 +132,11 @@ app.get("/stop", (req, res) => {
   }
 
   viewers[id] = 0;
+  clearInterval(viewerIntervals[id]);
 
-  if (viewerIntervals[id]) {
-    clearInterval(viewerIntervals[id]);
-    delete viewerIntervals[id];
-  }
-
-  res.send(`🛑 Channel ${id} stopped`);
+  res.send("stopped");
 });
 
-// 📊 Status API
 app.get("/status", (req, res) => {
   const result = {};
 
@@ -194,50 +151,86 @@ app.get("/status", (req, res) => {
 });
 
 // ===============================
-// 📡 Dashboard
+// 🧹 زر تفريغ الكل
+// ===============================
+app.get("/clear", (req, res) => {
+  for (const id in ffmpegProcesses) {
+    ffmpegProcesses[id].kill("SIGKILL");
+  }
+
+  ffmpegProcesses = {};
+  viewers = {};
+  viewerIntervals = {};
+
+  res.send("cleared");
+});
+
+// ===============================
+// ⚙️ إعدادات
+// ===============================
+app.get("/settings", (req, res) => {
+  res.json({
+    channels: Object.keys(channels).length,
+    ffmpeg: "running system"
+  });
+});
+
+// ===============================
+// ➕ إضافة قناة
+// ===============================
+app.post("/add", (req, res) => {
+  const { id, input, output } = req.body;
+
+  channels[id] = { input, output };
+
+  res.send("added");
+});
+
+// ===============================
+// 📥 M3U (تجريبي)
+// ===============================
+app.post("/import", (req, res) => {
+  const { url } = req.body;
+
+  console.log("M3U:", url);
+
+  res.send("imported");
+});
+
+// ===============================
+// 📡 Dashboard (نفس شكل UI)
 // ===============================
 app.get("/dashboard", (req, res) => {
-res.send(`
+  res.send(`
 <!DOCTYPE html>
-
 <html dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>لوحة إعادة البث</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة التحكم</title>
 
 <style>
-/* 👇 نفس ستايلك الأصلي بدون أي تغيير */
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
-
 body{
 background:linear-gradient(180deg,#040915,#091325);
 color:white;
 padding:18px;
+font-family:Arial;
 }
 
-.wrap{max-width:1500px;margin:auto;}
+.wrap{max-width:1400px;margin:auto;}
+.grid{display:grid;grid-template-columns:430px 1fr;gap:20px;}
 
-.grid{
-display:grid;
-grid-template-columns:430px 1fr;
-gap:20px;
-}
-
-.panel{
-background:#0f1730;
-padding:20px;
-border-radius:25px;
-border:1px solid #1d2b56;
-}
-
-.title{font-size:34px;font-weight:bold;margin-bottom:20px;}
-
-.menu{display:flex;flex-direction:column;gap:14px;}
+.panel{background:#0f1730;padding:20px;border-radius:25px;}
 
 .menu button{
-height:72px;border:none;border-radius:18px;
-font-size:24px;cursor:pointer;color:white;
+display:block;
+width:100%;
+margin:10px 0;
+padding:18px;
+border:none;
+border-radius:12px;
+font-size:18px;
+cursor:pointer;
+color:white;
 }
 
 .clear{background:#3b3520;}
@@ -246,77 +239,15 @@ font-size:24px;cursor:pointer;color:white;
 .add{background:#3d83ff;}
 .exit{background:#341827;}
 
-.stats{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-margin-top:20px;
-}
-
-.card{
-background:#101938;
-padding:30px;
-border-radius:24px;
-min-height:180px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.big{font-size:60px;font-weight:bold;}
-
-.box{
-background:#101938;
-margin-top:20px;
-padding:25px;
-border-radius:24px;
-}
-
-.channels{margin-top:20px;display:flex;gap:12px;overflow:auto;}
-
-.tag{background:#121c3f;padding:14px 22px;border-radius:999px;}
-
-.active{background:#3d83ff;}
-
-.liveGrid{
-margin-top:25px;
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-gap:18px;
-}
-
-.liveCard{
-background:#101938;
-padding:22px;
-border-radius:20px;
-}
+.card{background:#101938;padding:20px;border-radius:15px;margin:10px;}
 
 .online{color:#00ff88;}
 .offline{color:#ff5555;}
 
-.btns{display:flex;gap:10px;margin-top:18px;}
-
-.action{
-width:100%;
-border:none;
-padding:14px;
-border-radius:14px;
-color:white;
-cursor:pointer;
-}
-
-.start{background:#1da74f;}
-.stop{background:#d53d3d;}
-
-.viewer{margin-top:15px;font-size:18px;color:#6dbfff;}
-
-.total{margin-top:10px;color:#ffcc66;}
-
-@media(max-width:900px){
-.grid{grid-template-columns:1fr;}
-}
+button.action{padding:10px;border:none;border-radius:8px;cursor:pointer;}
+.start{background:#1da74f;color:white;}
+.stop{background:#d53d3d;color:white;}
 </style>
-
 </head>
 
 <body>
@@ -324,43 +255,17 @@ cursor:pointer;
 <div class="wrap">
 <div class="grid">
 
-<!-- PANEL -->
 <div class="panel">
-<div class="title">📡 لوحة إعادة بث القنوات</div>
+<h2>📡 لوحة التحكم</h2>
 
-<div class="menu">
-<button class="clear">🗑️ تفريغ الكاش والـ FFmpeg</button>
-<button class="settings">⚙️ الإعدادات</button>
-<button class="import">↪ استيراد M3U</button>
-<button class="add">＋ إضافة قناة</button>
-<button class="exit">↩ خروج</button>
-</div>
+<button class="clear" onclick="clearAll()">🗑️ تفريغ الكل</button>
+<button class="settings" onclick="settings()">⚙️ الإعدادات</button>
+<button class="import" onclick="importM3U()">↪ M3U</button>
+<button class="add" onclick="add()">＋ إضافة</button>
+<button class="exit" onclick="exitApp()">↩ خروج</button>
 </div>
 
-<!-- MAIN -->
-<div>
-
-<div class="stats">
-
-<div class="card">
-<div>القنوات النشطة حالياً</div>
-<div class="big" id="live">0</div>
-</div>
-
-<div class="card">
-<div>إجمالي القنوات</div>
-<div class="big">${Object.keys(channels).length}</div>
-</div>
-
-</div>
-
-<div class="channels">
-<div class="tag active">الكل</div>
-</div>
-
-<div class="liveGrid" id="list"></div>
-
-</div>
+<div id="list"></div>
 
 </div>
 </div>
@@ -374,44 +279,58 @@ const data = await r.json();
 const box = document.getElementById("list");
 box.innerHTML = "";
 
-let live = 0;
-
 for(const ch in data){
 const d = data[ch];
 
-if(d.active) live++;
-
 box.innerHTML += \`
-<div class="liveCard">
-<h2>\${ch}</h2>
+<div class="card">
+<h3>\${ch}</h3>
 
-<h3 class="\${d.active ? 'online' : 'offline'}">
-\${d.active ? '🟢 LIVE' : '🔴 OFFLINE'}
-</h3>
-
-<div class="viewer">
-👁️ المشاهدين الآن: <b>\${d.viewers}</b>
+<div class="\${d.active ? 'online':'offline'}">
+\${d.active ? 'LIVE':'OFFLINE'}
 </div>
 
-<div class="btns">
-<a href="/start?id=\${ch}">
-<button class="action start">تشغيل</button>
-</a>
+<p>👁️ \${d.viewers}</p>
 
-<a href="/stop?id=\${ch}">
-<button class="action stop">إيقاف</button>
-</a>
-</div>
-
+<a href="/start?id=\${ch}"><button class="action start">تشغيل</button></a>
+<a href="/stop?id=\${ch}"><button class="action stop">إيقاف</button></a>
 </div>
 \`;
 }
-
-document.getElementById("live").innerText = live;
 }
 
 load();
-setInterval(load, 3000);
+setInterval(load,3000);
+
+// ===== actions =====
+async function clearAll(){
+await fetch("/clear");
+load();
+}
+
+async function settings(){
+const r = await fetch("/settings");
+alert(JSON.stringify(await r.json()));
+}
+
+async function importM3U(){
+const url = prompt("M3U URL");
+await fetch("/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+alert("done");
+}
+
+async function add(){
+const id = prompt("id");
+const input = prompt("input");
+const output = prompt("output");
+
+await fetch("/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,input,output})});
+load();
+}
+
+function exitApp(){
+alert("لا يمكن إغلاق السيرفر من المتصفح");
+}
 
 </script>
 
@@ -421,9 +340,4 @@ setInterval(load, 3000);
 });
 
 // ===============================
-app.get("/health", (req, res) => res.send("OK"));
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log("🚀 Server running on port", port);
-});
+app.listen(3000, () => console.log("running"));
