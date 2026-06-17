@@ -2,7 +2,9 @@ import express from "express";
 import { spawn } from "child_process";
 
 const app = express();
+app.use(express.json());
 
+// ===============================
 let ffmpegProcesses = {};
 let viewerIntervals = {};
 let viewers = {};
@@ -52,7 +54,7 @@ function getLogo(id) {
 }
 
 // ===============================
-// 🛡️ حماية السيرفر
+// 🛡️ حماية من crash
 // ===============================
 process.on("uncaughtException", (err) => {
   console.log("🔥 ERROR:", err.message);
@@ -63,7 +65,7 @@ process.on("unhandledRejection", (err) => {
 });
 
 // ===============================
-// 🎬 تشغيل القناة (FIXED)
+// 🎬 تشغيل القناة
 // ===============================
 function spawnStream(id) {
   if (ffmpegProcesses[id]) return;
@@ -71,12 +73,11 @@ function spawnStream(id) {
   const ch = channels[id];
   if (!ch) return;
 
-  console.log("▶ starting:", id);
+  console.log("▶ start:", id);
 
   const ffmpeg = spawn("ffmpeg", [
     "-re",
 
-    // 🔥 Stability
     "-reconnect", "1",
     "-reconnect_streamed", "1",
     "-reconnect_delay_max", "5",
@@ -85,7 +86,6 @@ function spawnStream(id) {
     "-i", ch.input,
     "-i", getLogo(id),
 
-    // 🔥 FIXED overlay (no huge scale)
     "-filter_complex",
     "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=220:-1[logo];[base][logo]overlay=W-w-15:15",
 
@@ -93,7 +93,6 @@ function spawnStream(id) {
     "-preset", "veryfast",
     "-tune", "zerolatency",
 
-    // 🔥 Lower bitrate to avoid Railway crash
     "-b:v", "2200k",
     "-maxrate", "2200k",
     "-bufsize", "3500k",
@@ -115,8 +114,6 @@ function spawnStream(id) {
   if (viewerIntervals[id]) clearInterval(viewerIntervals[id]);
 
   viewerIntervals[id] = setInterval(() => {
-    if (!viewers[id]) return;
-
     const r = Math.random();
     if (r > 0.7) viewers[id]++;
     else if (r < 0.3) viewers[id] = Math.max(1, viewers[id] - 1);
@@ -127,7 +124,7 @@ function spawnStream(id) {
   });
 
   ffmpeg.on("exit", (code) => {
-    console.log(`❌ ${id} exited ${code}`);
+    console.log("❌ exit:", id);
 
     delete ffmpegProcesses[id];
     viewers[id] = 0;
@@ -137,11 +134,8 @@ function spawnStream(id) {
       delete viewerIntervals[id];
     }
 
-    // 🔥 prevent crash loop
     setTimeout(() => {
-      if (!ffmpegProcesses[id]) {
-        spawnStream(id);
-      }
+      spawnStream(id);
     }, 8000);
   });
 }
@@ -150,16 +144,14 @@ function spawnStream(id) {
 // 🌐 API
 // ===============================
 app.get("/", (req, res) => {
-  res.send("🚀 Streaming Server Running Stable FIXED");
+  res.send("🚀 Server Running OK");
 });
 
 app.get("/start", (req, res) => {
   const id = req.query.id;
-
   if (!channels[id]) return res.send("❌ invalid channel");
 
   spawnStream(id);
-
   res.send("started " + id);
 });
 
@@ -195,8 +187,6 @@ app.get("/status", (req, res) => {
 });
 
 // ===============================
-// 🧹 clear system
-// ===============================
 app.get("/clear", (req, res) => {
   for (const id in ffmpegProcesses) {
     ffmpegProcesses[id].kill("SIGKILL");
@@ -210,21 +200,14 @@ app.get("/clear", (req, res) => {
 });
 
 // ===============================
-// ⚙️ settings
-// ===============================
 app.get("/settings", (req, res) => {
   res.json({
     status: "ok",
-    channels: Object.keys(channels).length,
-    system: "stable-mode"
+    channels: Object.keys(channels).length
   });
 });
 
 // ===============================
-// ➕ add channel
-// ===============================
-app.use(express.json());
-
 app.post("/add", (req, res) => {
   const { id, input, output } = req.body;
 
@@ -238,18 +221,105 @@ app.post("/add", (req, res) => {
 });
 
 // ===============================
-// 📥 M3U (basic)
-// ===============================
 app.post("/import", (req, res) => {
   console.log("M3U:", req.body?.url);
   res.send("imported");
 });
 
 // ===============================
-// 🚀 start server (IMPORTANT)
+// 📡 DASHBOARD (FIXED)
+// ===============================
+app.get("/dashboard", (req, res) => {
+  res.send(`
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+
+<style>
+body{
+background:linear-gradient(180deg,#040915,#091325);
+color:white;
+font-family:Arial;
+padding:20px;
+}
+
+.card{
+background:#101938;
+padding:20px;
+margin:10px;
+border-radius:12px;
+}
+
+.online{color:#00ff88}
+.offline{color:#ff5555}
+
+button{
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin:5px;
+}
+
+.start{background:#1da74f;color:white}
+.stop{background:#d53d3d;color:white}
+</style>
+</head>
+
+<body>
+
+<h1>📡 Dashboard</h1>
+
+<div id="list"></div>
+
+<script>
+
+async function load(){
+const r = await fetch("/status");
+const data = await r.json();
+
+const box = document.getElementById("list");
+box.innerHTML = "";
+
+for(const ch in data){
+const d = data[ch];
+
+box.innerHTML += \`
+<div class="card">
+<h2>\${ch}</h2>
+
+<div class="\${d.active ? 'online':'offline'}">
+\${d.active ? '🟢 LIVE' : '🔴 OFFLINE'}
+</div>
+
+<p>👁️ \${d.viewers}</p>
+
+<a href="/start?id=\${ch}">
+<button class="start">تشغيل</button>
+</a>
+
+<a href="/stop?id=\${ch}">
+<button class="stop">إيقاف</button>
+</a>
+</div>
+\`;
+}
+}
+
+load();
+setInterval(load, 3000);
+
+</script>
+
+</body>
+</html>
+`);
+});
+
 // ===============================
 const port = process.env.PORT || 3000;
-
 app.listen(port, () => {
-  console.log("🚀 Server running on port", port);
+  console.log("🚀 RUNNING:", port);
 });
