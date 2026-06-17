@@ -245,62 +245,73 @@ app.get("/dashboard", (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard PRO</title>
+<title>Control Panel PRO</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
-background:#070b1a;
+background:#0b1020;
 color:#fff;
-}
-
-.header{
-padding:20px;
-background:#0f1730;
 display:flex;
-justify-content:space-between;
-align-items:center;
-border-bottom:1px solid #1c2a55;
+height:100vh;
 }
 
-.header h2{
-margin:0;
-font-size:20px;
+/* SIDEBAR */
+.sidebar{
+width:240px;
+background:#0f1730;
+padding:15px;
+border-left:1px solid #1d2b56;
+display:flex;
+flex-direction:column;
+gap:10px;
 }
 
+.sidebar h2{
+font-size:18px;
+margin-bottom:10px;
+}
+
+.menu button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#151f3f;
+color:white;
+text-align:right;
+}
+
+.menu button:hover{
+background:#22305f;
+}
+
+/* CONTENT */
+.content{
+flex:1;
+padding:20px;
+overflow:auto;
+}
+
+/* CARDS */
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
 gap:15px;
-padding:15px;
+margin-top:15px;
 }
 
 .card{
 background:#101938;
-border:1px solid #1d2b56;
-border-radius:15px;
 padding:15px;
-transition:0.2s;
-}
-
-.card:hover{
-transform:scale(1.02);
-}
-
-.status{
-font-weight:bold;
-margin:10px 0;
+border-radius:15px;
+border:1px solid #1d2b56;
 }
 
 .online{color:#00ff88}
 .offline{color:#ff4d4d}
-
-.meta{
-color:#aaa;
-font-size:14px;
-margin:5px 0;
-}
 
 .btns{
 display:flex;
@@ -308,46 +319,101 @@ gap:10px;
 margin-top:10px;
 }
 
-button{
+button.action{
 flex:1;
 padding:10px;
 border:none;
 border-radius:10px;
 cursor:pointer;
-font-weight:bold;
 }
 
-.start{background:#1db954;color:#fff}
-.stop{background:#e74c3c;color:#fff}
+.start{background:#1db954;color:white}
+.stop{background:#e74c3c;color:white}
 
-.footer{
-text-align:center;
-padding:10px;
-color:#666;
-font-size:12px;
+.section{
+display:none;
+}
+
+.active{
+display:block;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-<h2>📡 Stream Dashboard PRO</h2>
-<div>⚡ Live Control Panel</div>
+<!-- SIDEBAR -->
+<div class="sidebar">
+<h2>📡 CONTROL PANEL</h2>
+
+<div class="menu">
+<button onclick="show('overview')">📊 Overview</button>
+<button onclick="show('channels')">📺 Channels</button>
+<button onclick="show('settings')">⚙ Settings</button>
+<button onclick="show('logs')">📜 Logs</button>
+</div>
 </div>
 
-<div id="grid" class="grid"></div>
+<!-- CONTENT -->
+<div class="content">
 
-<div class="footer">
-Auto refresh every 2 seconds
+<!-- OVERVIEW -->
+<div id="overview" class="section active">
+<h2>📊 Overview</h2>
+<div id="stats"></div>
+</div>
+
+<!-- CHANNELS -->
+<div id="channels" class="section">
+<h2>📺 Channels</h2>
+<div id="grid" class="grid"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="section">
+<h2>⚙ Settings</h2>
+<p>System is running in PRO mode</p>
+</div>
+
+<!-- LOGS -->
+<div id="logs" class="section">
+<h2>📜 Logs</h2>
+<p>FFmpeg logs will appear in server console</p>
+</div>
+
 </div>
 
 <script>
 
+function show(id){
+document.querySelectorAll('.section')
+.forEach(s=>s.classList.remove('active'));
+
+document.getElementById(id).classList.add('active');
+}
+
 async function load(){
+
 const res = await fetch("/status");
 const data = await res.json();
 
+/* OVERVIEW */
+let live = 0;
+let total = 0;
+
+for(const id in data){
+total++;
+if(data[id].active) live++;
+}
+
+document.getElementById("stats").innerHTML = \`
+<div class="card">
+<h3>🟢 Live Channels: \${live}</h3>
+<h3>📡 Total: \${total}</h3>
+</div>
+\`;
+
+/* CHANNELS */
 const grid = document.getElementById("grid");
 grid.innerHTML = "";
 
@@ -356,31 +422,27 @@ const ch = data[id];
 
 grid.innerHTML += \`
 <div class="card">
+<h3>\${id}</h3>
 
-<h3>📺 \${id}</h3>
-
-<div class="status \${ch.active ? 'online':'offline'}">
+<div class="\${ch.active ? 'online':'offline'}">
 \${ch.active ? '🟢 LIVE' : '🔴 OFFLINE'}
 </div>
 
-<div class="meta">
-👁️ Viewers: <b>\${ch.viewers}</b>
-</div>
+<p>👁️ \${ch.viewers}</p>
 
 <div class="btns">
 <a href="/start?id=\${id}">
-<button class="start">▶ Start</button>
+<button class="action start">Start</button>
 </a>
 
 <a href="/stop?id=\${id}">
-<button class="stop">⛔ Stop</button>
+<button class="action stop">Stop</button>
 </a>
 </div>
 
 </div>
 \`;
 }
-
 }
 
 load();
