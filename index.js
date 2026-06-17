@@ -197,70 +197,227 @@ app.get("/status", (req, res) => {
 // 📡 Dashboard
 // ===============================
 app.get("/dashboard", (req, res) => {
-  res.send(`
+res.send(`
 <!DOCTYPE html>
+
 <html dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard</title>
+<title>لوحة إعادة البث</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
-body{background:#050b18;color:#fff;font-family:Arial;padding:20px}
-.card{background:#101938;padding:20px;margin:10px;border-radius:12px}
-.online{color:#00ff88}
-.offline{color:#ff5555}
-button{padding:10px;border:none;border-radius:8px;cursor:pointer}
-.start{background:#1da74f;color:#fff}
-.stop{background:#d53d3d;color:#fff}
+/* 👇 نفس ستايلك الأصلي بدون أي تغيير */
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+
+body{
+background:linear-gradient(180deg,#040915,#091325);
+color:white;
+padding:18px;
+}
+
+.wrap{max-width:1500px;margin:auto;}
+
+.grid{
+display:grid;
+grid-template-columns:430px 1fr;
+gap:20px;
+}
+
+.panel{
+background:#0f1730;
+padding:20px;
+border-radius:25px;
+border:1px solid #1d2b56;
+}
+
+.title{font-size:34px;font-weight:bold;margin-bottom:20px;}
+
+.menu{display:flex;flex-direction:column;gap:14px;}
+
+.menu button{
+height:72px;border:none;border-radius:18px;
+font-size:24px;cursor:pointer;color:white;
+}
+
+.clear{background:#3b3520;}
+.settings{background:#151f3f;}
+.import{background:#151f3f;}
+.add{background:#3d83ff;}
+.exit{background:#341827;}
+
+.stats{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-top:20px;
+}
+
+.card{
+background:#101938;
+padding:30px;
+border-radius:24px;
+min-height:180px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.big{font-size:60px;font-weight:bold;}
+
+.box{
+background:#101938;
+margin-top:20px;
+padding:25px;
+border-radius:24px;
+}
+
+.channels{margin-top:20px;display:flex;gap:12px;overflow:auto;}
+
+.tag{background:#121c3f;padding:14px 22px;border-radius:999px;}
+
+.active{background:#3d83ff;}
+
+.liveGrid{
+margin-top:25px;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+gap:18px;
+}
+
+.liveCard{
+background:#101938;
+padding:22px;
+border-radius:20px;
+}
+
+.online{color:#00ff88;}
+.offline{color:#ff5555;}
+
+.btns{display:flex;gap:10px;margin-top:18px;}
+
+.action{
+width:100%;
+border:none;
+padding:14px;
+border-radius:14px;
+color:white;
+cursor:pointer;
+}
+
+.start{background:#1da74f;}
+.stop{background:#d53d3d;}
+
+.viewer{margin-top:15px;font-size:18px;color:#6dbfff;}
+
+.total{margin-top:10px;color:#ffcc66;}
+
+@media(max-width:900px){
+.grid{grid-template-columns:1fr;}
+}
 </style>
+
 </head>
 
 <body>
 
-<h1>📡 Dashboard</h1>
+<div class="wrap">
+<div class="grid">
 
-<div id="list"></div>
+<!-- PANEL -->
+<div class="panel">
+<div class="title">📡 لوحة إعادة بث القنوات</div>
+
+<div class="menu">
+<button class="clear">🗑️ تفريغ الكاش والـ FFmpeg</button>
+<button class="settings">⚙️ الإعدادات</button>
+<button class="import">↪ استيراد M3U</button>
+<button class="add">＋ إضافة قناة</button>
+<button class="exit">↩ خروج</button>
+</div>
+</div>
+
+<!-- MAIN -->
+<div>
+
+<div class="stats">
+
+<div class="card">
+<div>القنوات النشطة حالياً</div>
+<div class="big" id="live">0</div>
+</div>
+
+<div class="card">
+<div>إجمالي القنوات</div>
+<div class="big">${Object.keys(channels).length}</div>
+</div>
+
+</div>
+
+<div class="channels">
+<div class="tag active">الكل</div>
+</div>
+
+<div class="liveGrid" id="list"></div>
+
+</div>
+
+</div>
+</div>
 
 <script>
-let total = {};
 
 async function load(){
-  const r = await fetch("/status");
-  const data = await r.json();
+const r = await fetch("/status");
+const data = await r.json();
 
-  const box = document.getElementById("list");
-  box.innerHTML = "";
+const box = document.getElementById("list");
+box.innerHTML = "";
 
-  for(const ch in data){
-    const d = data[ch];
+let live = 0;
 
-    if(!total[ch]) total[ch] = 0;
-    total[ch] = Math.max(total[ch], d.viewers);
+for(const ch in data){
+const d = data[ch];
 
-    box.innerHTML += \`
-      <div class="card">
-        <h2>\${ch}</h2>
-        <div class="\${d.active ? 'online':'offline'}">
-          \${d.active ? '🟢 LIVE' : '🔴 OFFLINE'}
-        </div>
+if(d.active) live++;
 
-        <p>👁️ الآن: \${d.viewers}</p>
-        <p>📈 أعلى مشاهدة: \${total[ch]}</p>
+box.innerHTML += \`
+<div class="liveCard">
+<h2>\${ch}</h2>
 
-        <a href="/start?id=\${ch}"><button class="start">تشغيل</button></a>
-        <a href="/stop?id=\${ch}"><button class="stop">إيقاف</button></a>
-      </div>
-    \`;
-  }
+<h3 class="\${d.active ? 'online' : 'offline'}">
+\${d.active ? '🟢 LIVE' : '🔴 OFFLINE'}
+</h3>
+
+<div class="viewer">
+👁️ المشاهدين الآن: <b>\${d.viewers}</b>
+</div>
+
+<div class="btns">
+<a href="/start?id=\${ch}">
+<button class="action start">تشغيل</button>
+</a>
+
+<a href="/stop?id=\${ch}">
+<button class="action stop">إيقاف</button>
+</a>
+</div>
+
+</div>
+\`;
+}
+
+document.getElementById("live").innerText = live;
 }
 
 load();
 setInterval(load, 3000);
+
 </script>
 
 </body>
 </html>
-  `);
+`);
 });
 
 // ===============================
