@@ -332,66 +332,148 @@ res.send(`
 
 <meta charset="UTF-8">
 
-<title>Admin Panel</title>
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
+
+<title>
+Control Panel
+</title>
 
 <style>
 
-body{
+*{
 margin:0;
-background:#0b1020;
-color:white;
+padding:0;
+box-sizing:border-box;
 font-family:Arial;
+}
+
+body{
+
+background:#0b1020;
+
+color:white;
+
 display:flex;
+
+min-height:100vh;
+
 }
 
 .side{
-width:250px;
+
+width:260px;
+
 background:#101938;
-height:100vh;
+
 padding:20px;
+
+}
+
+.side h2{
+
+margin-bottom:20px;
+
 }
 
 .side button{
+
 width:100%;
-padding:15px;
+
+padding:14px;
+
 margin-bottom:10px;
-border:none;
-border-radius:12px;
-cursor:pointer;
+
 background:#182347;
+
+border:none;
+
+border-radius:12px;
+
 color:white;
+
+cursor:pointer;
+
 }
 
 .main{
+
 flex:1;
+
 padding:20px;
+
 overflow:auto;
+
+}
+
+.grid{
+
+display:grid;
+
+grid-template-columns:
+repeat(
+auto-fill,
+minmax(
+330px,
+1fr
+));
+
+gap:15px;
+
 }
 
 .card{
+
 background:#151f3f;
+
 padding:18px;
-border-radius:14px;
-margin-bottom:10px;
+
+border-radius:15px;
+
 }
 
-input{
-width:100%;
-padding:12px;
-margin-bottom:10px;
+.live{
+
+color:#00ff88;
+
+}
+
+.off{
+
+color:#ff5555;
+
 }
 
 .actions{
+
 display:flex;
+
 gap:10px;
-margin-top:10px;
+
+margin-top:15px;
+
 }
 
 .actions button{
+
 padding:10px;
+
 border:none;
+
 border-radius:10px;
+
 cursor:pointer;
+
+}
+
+input{
+
+width:100%;
+
+padding:12px;
+
+margin-bottom:10px;
+
 }
 
 </style>
@@ -402,38 +484,59 @@ cursor:pointer;
 
 <div class="side">
 
-<h2>📡 CONTROL</h2>
+<h2>
 
-<button onclick="tab('channels')">
+📡 لوحة التحكم
+
+</h2>
+
+<button
+onclick="show('channels')">
+
 📺 القنوات
+
 </button>
 
-<button onclick="tab('add')">
-➕ إضافة قناة
+<button
+onclick="show('add')">
+
+➕ إضافة
+
 </button>
 
 </div>
 
 <div class="main">
 
-<div id="channels"></div>
+<div
+id="channels">
+
+<div
+class="grid"
+id="list">
+
+</div>
+
+</div>
 
 <div
 id="add"
-style="display:none"
->
+
+style="
+display:none
+">
 
 <input
 id="newid"
 placeholder="ID">
 
 <input
-id="input"
-placeholder="Input URL">
+id="newinput"
+placeholder="Input">
 
 <input
-id="output"
-placeholder="Output RTMP">
+id="newoutput"
+placeholder="Output">
 
 <button
 onclick="save()">
@@ -448,43 +551,80 @@ onclick="save()">
 
 <script>
 
-function tab(id){
+let totalViews={};
+
+function show(id){
 
 document
-.querySelectorAll(
-".main>div"
+.getElementById(
+"channels"
 )
 
-.forEach(
-v=>v.style.display="none"
-);
+style.display=
+"none";
+
+document
+.getElementById(
+"add"
+)
+
+style.display=
+"none";
 
 document
 .getElementById(
 id
 )
-.style.display=
+
+style.display=
 "block";
 
 }
 
 async function load(){
 
-const r=
+const ch=
 await fetch(
 "/channels"
 );
 
-const data=
-await r.json();
+const channels=
+await ch.json();
 
-let html="";
+const st=
+await fetch(
+"/status"
+);
+
+const status=
+await st.json();
+
+const box=
+document
+.getElementById(
+"list"
+);
+
+box.innerHTML="";
 
 for(
-let id in data
+const id
+in channels
 ){
 
-html+=\`
+if(
+!totalViews[id]
+)
+
+totalViews[id]=0;
+
+totalViews[id]+=
+status[id]
+?.viewers
+||
+0;
+
+box.innerHTML+=\`
 
 <div class="card">
 
@@ -494,13 +634,92 @@ html+=\`
 
 </h2>
 
-<div>
+<div class="
+\${
 
-<b>INPUT</b>
+status[id]
+?.active
+
+?
+
+'live'
+
+:
+
+'off'
+
+}
+
+">
+
+\${
+
+status[id]
+?.active
+
+?
+
+'🟢 شغالة'
+
+:
+
+'🔴 متوقفة'
+
+}
+
+</div>
 
 <br>
 
-\${data[id].input}
+👁️ المشاهدين الآن:
+
+<b>
+
+\${
+
+status[id]
+?.viewers
+
+||
+
+0
+
+}
+
+</b>
+
+<br><br>
+
+📈 إجمالي المشاهدات:
+
+<b>
+
+\${
+
+totalViews[id]
+
+}
+
+</b>
+
+<br><br>
+
+<div>
+
+<b>
+
+Input
+
+</b>
+
+<br>
+
+\${
+
+channels[id]
+.input
+
+}
 
 </div>
 
@@ -508,41 +727,51 @@ html+=\`
 
 <div>
 
-<b>OUTPUT</b>
+<b>
+
+Output
+
+</b>
 
 <br>
 
-\${data[id].output}
+\${
+
+channels[id]
+.output
+
+}
 
 </div>
 
-<div class="actions">
+<div
+class="actions">
 
 <button
 onclick="start('\${id}')">
 
-▶ تشغيل
+▶
 
 </button>
 
 <button
 onclick="stop('\${id}')">
 
-⏹ إيقاف
+⏹
 
 </button>
 
 <button
 onclick="editChannel('\${id}')">
 
-✏ تعديل
+✏
 
 </button>
 
 <button
 onclick="del('\${id}')">
 
-🗑 حذف
+🗑
 
 </button>
 
@@ -554,28 +783,39 @@ onclick="del('\${id}')">
 
 }
 
-document
-.getElementById(
-"channels"
-)
+}
 
-.innerHTML=
+function start(id){
 
-html;
+location=
+"/start?id="+id;
+
+}
+
+function stop(id){
+
+location=
+"/stop?id="+id;
 
 }
 
 async function save(){
 
 await fetch(
+
 "/channel",
+
 {
 
-method:"POST",
+method:
+"POST",
 
 headers:{
+
 "Content-Type":
+
 "application/json"
+
 },
 
 body:
@@ -586,10 +826,10 @@ id:
 newid.value,
 
 input:
-input.value,
+newinput.value,
 
 output:
-output.value
+newoutput.value
 
 })
 
@@ -597,11 +837,11 @@ output.value
 
 );
 
-alert(
-"تمت الإضافة"
-);
-
 load();
+
+show(
+"channels"
+);
 
 }
 
@@ -615,13 +855,14 @@ await fetch(
 const data=
 await r.json();
 
-const ch=
-data[id];
-
 const input=
 prompt(
+
 "Input",
-ch.input
+
+data[id]
+.input
+
 );
 
 if(
@@ -631,8 +872,12 @@ return;
 
 const output=
 prompt(
+
 "Output",
-ch.output
+
+data[id]
+.output
+
 );
 
 if(
@@ -646,11 +891,14 @@ await fetch(
 
 {
 
-method:"PUT",
+method:
+"PUT",
 
 headers:{
+
 "Content-Type":
 "application/json"
+
 },
 
 body:
@@ -667,10 +915,6 @@ output
 
 );
 
-alert(
-"تم التعديل"
-);
-
 load();
 
 }
@@ -679,9 +923,10 @@ async function del(id){
 
 if(
 !confirm(
-"حذف القناة؟"
+"حذف؟"
 )
 )
+
 return;
 
 await fetch(
@@ -689,26 +934,15 @@ await fetch(
 "/channel/"+id,
 
 {
-method:"DELETE"
+
+method:
+"DELETE"
+
 }
 
 );
 
 load();
-
-}
-
-function start(id){
-
-location=
-"/start?id="+id;
-
-}
-
-function stop(id){
-
-location=
-"/stop?id="+id;
 
 }
 
