@@ -326,11 +326,11 @@ res.send(`
 
 <!DOCTYPE html>
 <html dir="rtl">
-
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Control Panel PRO</title>
+<title>Stream Control Panel</title>
 
 <style>
 
@@ -345,7 +345,7 @@ min-height:100vh;
 
 /* SIDEBAR */
 .side{
-width:250px;
+width:240px;
 background:#101938;
 padding:20px;
 }
@@ -411,7 +411,6 @@ font-weight:bold;
 .edit{background:#3498db;color:white}
 .del{background:#444;color:white}
 
-/* INPUTS */
 input{
 width:100%;
 padding:10px;
@@ -521,7 +520,7 @@ ${channels[id].output}
 
 <button class="action start" onclick="start('${id}')">▶ تشغيل</button>
 <button class="action stop" onclick="stop('${id}')">⏹ إيقاف</button>
-<button class="action edit" onclick="edit('${id}')">✏ تعديل</button>
+<button class="action edit" onclick="editChannel('${id}')">✏ تعديل</button>
 <button class="action del" onclick="del('${id}')">🗑 حذف</button>
 
 </div>
@@ -571,7 +570,7 @@ method:"DELETE"
 load();
 }
 
-async function edit(id){
+async function editChannel(id){
 
 const r = await fetch("/channels");
 const data = await r.json();
