@@ -1,26 +1,19 @@
 import express from "express";
 import { spawn } from "child_process";
-import { WebSocketServer } from "ws";
 
 const app = express();
 app.use(express.json());
 
-// ===============================
-// 🔥 WebSocket setup
-// ===============================
-const wss = new WebSocketServer({ noServer: true });
-let clients = [];
-
-// ===============================
-// 🎯 State
-// ===============================
+// ======================
+// 🎯 STATE
+// ======================
 let ffmpegProcesses = {};
-let viewerIntervals = {};
 let viewers = {};
+let viewerIntervals = {};
 
-// ===============================
-// 🎯 Channels
-// ===============================
+// ======================
+// 🎯 CHANNELS
+// ======================
 const channels = {
   ch4k: {
     input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255224",
@@ -48,25 +41,25 @@ const channels = {
   }
 };
 
-// ===============================
-// 🎯 Logos
-// ===============================
-const logos = {
-  ch4k: "logo4kh.png",
-  ch1: "logo1.png",
-  ch2: "logo22.png",
-  ch3: "logo33.png",
-  ch4: "logo44.png",
-  ch5: "logo55.png",
-};
-
+// ======================
+// 🎬 LOGO
+// ======================
 function getLogo(id) {
+  const logos = {
+    ch4k: "logo4kh.png",
+    ch1: "logo1.png",
+    ch2: "logo22.png",
+    ch3: "logo33.png",
+    ch4: "logo44.png",
+    ch5: "logo55.png",
+  };
+
   return logos[id] || "logo.png";
 }
 
-// ===============================
-// 🛡️ Safety
-// ===============================
+// ======================
+// 🛡️ SAFETY
+// ======================
 process.on("uncaughtException", (err) => {
   console.log("🔥 ERROR:", err.message);
 });
@@ -75,9 +68,9 @@ process.on("unhandledRejection", (err) => {
   console.log("🔥 PROMISE ERROR:", err);
 });
 
-// ===============================
-// 🎬 FFmpeg stream
-// ===============================
+// ======================
+// 🎬 START STREAM
+// ======================
 function spawnStream(id) {
   if (ffmpegProcesses[id]) return;
 
@@ -92,21 +85,20 @@ function spawnStream(id) {
     "-reconnect", "1",
     "-reconnect_streamed", "1",
     "-reconnect_delay_max", "5",
-    "-rw_timeout", "15000000",
 
     "-i", ch.input,
     "-i", getLogo(id),
 
     "-filter_complex",
-    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=-1:3100[logo];[base][logo]overlay=W-w-2:2",
-    
+    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=-1:300[logo];[base][logo]overlay=W-w-10:10",
+
     "-c:v", "libx264",
     "-preset", "veryfast",
     "-tune", "zerolatency",
 
-    "-b:v", "2200k",
-    "-maxrate", "2200k",
-    "-bufsize", "3500k",
+    "-b:v", "2500k",
+    "-maxrate", "2500k",
+    "-bufsize", "4000k",
 
     "-r", "25",
     "-g", "50",
@@ -120,13 +112,14 @@ function spawnStream(id) {
 
   ffmpegProcesses[id] = ffmpeg;
 
-  viewers[id] = Math.floor(Math.random() * 5) + 2;
+  // 👁️ viewers fake stable
+  viewers[id] = Math.floor(Math.random() * 5) + 3;
 
   if (viewerIntervals[id]) clearInterval(viewerIntervals[id]);
 
   viewerIntervals[id] = setInterval(() => {
     const r = Math.random();
-    if (r > 0.7) viewers[id]++;
+    if (r > 0.6) viewers[id]++;
     else if (r < 0.3) viewers[id] = Math.max(1, viewers[id] - 1);
   }, 5000);
 
@@ -134,7 +127,7 @@ function spawnStream(id) {
     console.log(`[${id}] ${d.toString()}`);
   });
 
-  ffmpeg.on("exit", (code) => {
+  ffmpeg.on("exit", () => {
     console.log("❌ EXIT:", id);
 
     delete ffmpegProcesses[id];
@@ -145,18 +138,18 @@ function spawnStream(id) {
       delete viewerIntervals[id];
     }
 
-    // 🔥 auto restart safe
+    // safe restart
     setTimeout(() => {
-      spawnStream(id);
+      if (!ffmpegProcesses[id]) spawnStream(id);
     }, 8000);
   });
 }
 
-// ===============================
-// 🌐 API ROUTES
-// ===============================
+// ======================
+// 🌐 ROUTES
+// ======================
 app.get("/", (req, res) => {
-  res.send("🚀 STREAM SERVER PRO RUNNING");
+  res.send("🚀 IPTV PRO SERVER RUNNING");
 });
 
 app.get("/start", (req, res) => {
@@ -185,6 +178,9 @@ app.get("/stop", (req, res) => {
   res.send("stopped " + id);
 });
 
+// ======================
+// 📊 STATUS
+// ======================
 app.get("/status", (req, res) => {
   const result = {};
 
@@ -198,123 +194,59 @@ app.get("/status", (req, res) => {
   res.json(result);
 });
 
-app.get("/clear", (req, res) => {
-  for (const id in ffmpegProcesses) {
-    ffmpegProcesses[id].kill("SIGKILL");
-  }
-
-  ffmpegProcesses = {};
-  viewers = {};
-  viewerIntervals = {};
-
-  res.send("cleared");
+// ======================
+// 📺 CHANNELS API
+// ======================
+app.get("/channels", (req, res) => {
+  res.json(channels);
 });
 
-app.get("/settings", (req, res) => {
-  res.json({
-    status: "ok",
-    channels: Object.keys(channels).length,
-    system: "PRO MODE"
-  });
-});
-
-app.post("/add", (req, res) => {
+app.post("/channel", (req, res) => {
   const { id, input, output } = req.body;
 
-  if (!id || !input || !output) {
-    return res.status(400).send("missing data");
-  }
+  if (!id || !input || !output)
+    return res.status(400).json({ ok: false });
 
   channels[id] = { input, output };
 
-  res.send("added");
+  res.json({ ok: true });
 });
 
-app.post("/import", (req, res) => {
-  console.log("M3U:", req.body?.url);
-  res.send("imported");
+app.put("/channel/:id", (req, res) => {
+  const id = req.params.id;
+
+  if (!channels[id])
+    return res.status(404).json({ ok: false });
+
+  channels[id] = {
+    ...channels[id],
+    input: req.body.input ?? channels[id].input,
+    output: req.body.output ?? channels[id].output
+  };
+
+  res.json({ ok: true });
+});
+
+app.delete("/channel/:id", (req, res) => {
+  const id = req.params.id;
+
+  if (ffmpegProcesses[id]) {
+    ffmpegProcesses[id].kill("SIGKILL");
+    delete ffmpegProcesses[id];
+  }
+
+  delete channels[id];
+
+  res.json({ ok: true });
 });
 
 // ======================
-// CHANNELS API
+// 🚀 SERVER START
 // ======================
+const port = process.env.PORT || 3000;
 
-// قائمة القنوات
-app.get("/channels",(req,res)=>{
-res.json(channels);
-});
-
-// إضافة قناة
-app.post("/channel",(req,res)=>{
-
-const {id,input,output}=req.body;
-
-if(!id||!input||!output){
-return res.status(400).json({
-ok:false
-});
-}
-
-channels[id]={
-input,
-output
-};
-
-res.json({
-ok:true
-});
-
-});
-
-// تعديل قناة
-app.put("/channel/:id",(req,res)=>{
-
-const id=req.params.id;
-
-if(!channels[id]){
-return res.status(404).json({
-ok:false
-});
-}
-
-channels[id]={
-
-...channels[id],
-
-input:
-req.body.input
-??
-channels[id].input,
-
-output:
-req.body.output
-??
-channels[id].output
-
-};
-
-res.json({
-ok:true
-});
-
-});
-
-// حذف قناة
-app.delete("/channel/:id",(req,res)=>{
-
-const id=req.params.id;
-
-if(ffmpegProcesses[id]){
-ffmpegProcesses[id].kill("SIGKILL");
-delete ffmpegProcesses[id];
-}
-
-delete channels[id];
-
-res.json({
-ok:true
-});
-
+app.listen(port, () => {
+  console.log("🚀 IPTV PRO RUNNING ON PORT", port);
 });
 
 // ===============================
