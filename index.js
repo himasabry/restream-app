@@ -262,14 +262,14 @@ const html = `
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Streaming Panel</title>
+<title>IPTV PRO PANEL</title>
 
 <style>
 
 body{
 margin:0;
 font-family:Arial;
-background:#0b1020;
+background:linear-gradient(135deg,#070b1a,#0b1020);
 color:white;
 display:flex;
 min-height:100vh;
@@ -277,13 +277,16 @@ min-height:100vh;
 
 /* SIDE */
 .side{
-width:240px;
-background:#101938;
+width:260px;
+background:rgba(16,25,56,0.9);
+backdrop-filter:blur(10px);
 padding:20px;
+border-right:1px solid #1d2b56;
 }
 
 .side h2{
 margin-bottom:20px;
+color:#3da9fc;
 }
 
 .side button{
@@ -291,11 +294,17 @@ width:100%;
 padding:12px;
 margin-bottom:10px;
 border:none;
-border-radius:10px;
+border-radius:12px;
 cursor:pointer;
 background:#182347;
 color:white;
 font-weight:bold;
+transition:0.3s;
+}
+
+.side button:hover{
+background:#2a3a6a;
+transform:scale(1.03);
 }
 
 /* MAIN */
@@ -308,21 +317,59 @@ overflow:auto;
 /* GRID */
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-gap:15px;
+grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+gap:18px;
 }
 
 /* CARD */
 .card{
-background:#151f3f;
-padding:15px;
-border-radius:15px;
-border:1px solid #1d2b56;
+background:linear-gradient(145deg,#141d38,#101938);
+padding:18px;
+border-radius:18px;
+border:1px solid #26345f;
+box-shadow:0 8px 20px rgba(0,0,0,0.4);
+transition:0.3s;
+position:relative;
+overflow:hidden;
 }
 
-.live{color:#00ff88;font-weight:bold}
-.off{color:#ff5555;font-weight:bold}
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 12px 25px rgba(0,0,0,0.6);
+}
 
+.card::before{
+content:"";
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:3px;
+background:linear-gradient(90deg,#3da9fc,#00ff99);
+}
+
+/* STATUS */
+.live{
+color:#00ff99;
+font-weight:bold;
+font-size:14px;
+}
+
+.off{
+color:#ff4d4d;
+font-weight:bold;
+font-size:14px;
+}
+
+/* INFO */
+.info{
+margin-top:10px;
+font-size:13px;
+color:#b8c1ec;
+word-break:break-all;
+}
+
+/* BUTTONS */
 .btns{
 display:flex;
 gap:8px;
@@ -333,22 +380,48 @@ flex-wrap:wrap;
 button{
 padding:10px;
 border:none;
-border-radius:8px;
+border-radius:10px;
 cursor:pointer;
 font-weight:bold;
+transition:0.2s;
+}
+
+button:hover{
+transform:scale(1.05);
 }
 
 .start{background:#1db954;color:white}
 .stop{background:#e74c3c;color:white}
 .edit{background:#3498db;color:white}
-.del{background:#444;color:white}
+.del{background:#555;color:white}
 
+/* INPUT FORM */
 input{
 width:100%;
-padding:10px;
+padding:12px;
 margin-bottom:10px;
-border-radius:8px;
+border-radius:10px;
 border:none;
+background:#0f1733;
+color:white;
+outline:none;
+}
+
+input:focus{
+border:1px solid #3da9fc;
+}
+
+/* TITLE */
+h3{
+margin:0;
+color:#3da9fc;
+}
+
+hr{
+border:0;
+height:1px;
+background:#26345f;
+margin:10px 0;
 }
 
 </style>
@@ -359,7 +432,7 @@ border:none;
 
 <div class="side">
 
-<h2>📡 PANEL</h2>
+<h2>📡 IPTV PRO</h2>
 
 <button onclick="show('channels')">📺 القنوات</button>
 <button onclick="show('add')">➕ إضافة قناة</button>
@@ -376,11 +449,11 @@ border:none;
 
 <h2>➕ إضافة قناة</h2>
 
-<input id="id" placeholder="ID">
+<input id="id" placeholder="Channel ID">
 <input id="input" placeholder="Input URL">
-<input id="output" placeholder="Output RTMP">
+<input id="output" placeholder="RTMP Output">
 
-<button onclick="addChannel()">إضافة</button>
+<button onclick="addChannel()">➕ إضافة القناة</button>
 
 </div>
 
@@ -410,7 +483,6 @@ box.innerHTML="";
 for(const id in channels){
 
 if(!totalViews[id]) totalViews[id]=0;
-
 totalViews[id] += status[id]?.viewers || 0;
 
 box.innerHTML += \`
@@ -418,26 +490,24 @@ box.innerHTML += \`
 
 <h3>📺 \${id}</h3>
 
-<div>
-\${status[id]?.active
-? '<span class="live">🟢 LIVE</span>'
-: '<span class="off">🔴 OFF</span>'}
+<div class="\${status[id]?.active ? 'live' : 'off'}">
+\${status[id]?.active ? '🟢 LIVE' : '🔴 OFFLINE'}
 </div>
 
-<br>
-
-👁️ المشاهدين: <b>\${status[id]?.viewers || 0}</b><br>
-📈 الإجمالي: <b>\${totalViews[id]}</b>
+<div class="info">
+👁️ الحالي: <b>\${status[id]?.viewers || 0}</b><br>
+📊 الإجمالي: <b>\${totalViews[id]}</b>
+</div>
 
 <hr>
 
-<b>INPUT</b><br>
-\${channels[id].input}
+<div class="info">
+<b>INPUT:</b><br>\${channels[id].input}
+</div>
 
-<br><br>
-
-<b>OUTPUT</b><br>
-\${channels[id].output}
+<div class="info">
+<b>OUTPUT:</b><br>\${channels[id].output}
+</div>
 
 <div class="btns">
 
@@ -522,6 +592,8 @@ setInterval(load,3000);
 res.send(html);
 
 });
+
+
 // ===============================
 // 🚀 WebSocket server
 // ===============================
