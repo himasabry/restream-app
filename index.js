@@ -235,8 +235,18 @@ app.post("/import", (req, res) => {
   res.send("imported");
 });
 
-// ➕ إضافة قناة
-app.post("/channel", (req,res)=>{
+// ======================
+// CHANNELS API
+// ======================
+
+// قائمة القنوات
+app.get("/channels",(req,res)=>{
+res.json(channels);
+});
+
+// إضافة قناة
+app.post("/channel",(req,res)=>{
+
 const {id,input,output}=req.body;
 
 if(!id||!input||!output){
@@ -245,25 +255,9 @@ ok:false
 });
 }
 
-channels[id]={input,output};
-
-res.json({
-ok:true
-});
-});
-
-// ✏ تعديل
-app.put("/channel/:id",(req,res)=>{
-
-const old=req.params.id;
-
-if(!channels[old]){
-return res.sendStatus(404);
-}
-
-channels[old]={
-...channels[old],
-...req.body
+channels[id]={
+input,
+output
 };
 
 res.json({
@@ -272,7 +266,40 @@ ok:true
 
 });
 
-// 🗑 حذف
+// تعديل قناة
+app.put("/channel/:id",(req,res)=>{
+
+const id=req.params.id;
+
+if(!channels[id]){
+return res.status(404).json({
+ok:false
+});
+}
+
+channels[id]={
+
+...channels[id],
+
+input:
+req.body.input
+??
+channels[id].input,
+
+output:
+req.body.output
+??
+channels[id].output
+
+};
+
+res.json({
+ok:true
+});
+
+});
+
+// حذف قناة
 app.delete("/channel/:id",(req,res)=>{
 
 const id=req.params.id;
@@ -288,11 +315,6 @@ res.json({
 ok:true
 });
 
-});
-
-// 📋 قائمة القنوات
-app.get("/channels",(req,res)=>{
-res.json(channels);
 });
 
 // ===============================
@@ -323,7 +345,7 @@ display:flex;
 }
 
 .side{
-width:240px;
+width:250px;
 background:#101938;
 height:100vh;
 padding:20px;
@@ -331,22 +353,25 @@ padding:20px;
 
 .side button{
 width:100%;
-padding:14px;
+padding:15px;
 margin-bottom:10px;
 border:none;
-border-radius:10px;
+border-radius:12px;
 cursor:pointer;
+background:#182347;
+color:white;
 }
 
 .main{
 flex:1;
 padding:20px;
+overflow:auto;
 }
 
 .card{
 background:#151f3f;
-padding:15px;
-border-radius:12px;
+padding:18px;
+border-radius:14px;
 margin-bottom:10px;
 }
 
@@ -354,6 +379,19 @@ input{
 width:100%;
 padding:12px;
 margin-bottom:10px;
+}
+
+.actions{
+display:flex;
+gap:10px;
+margin-top:10px;
+}
+
+.actions button{
+padding:10px;
+border:none;
+border-radius:10px;
+cursor:pointer;
 }
 
 </style>
@@ -364,41 +402,44 @@ margin-bottom:10px;
 
 <div class="side">
 
-<h2>📡 PANEL</h2>
+<h2>📡 CONTROL</h2>
 
 <button onclick="tab('channels')">
 📺 القنوات
 </button>
 
 <button onclick="tab('add')">
-➕ إضافة
+➕ إضافة قناة
 </button>
 
 </div>
 
 <div class="main">
 
-<div id="channels">
+<div id="channels"></div>
 
-</div>
-
-<div id="add"
-style="display:none">
+<div
+id="add"
+style="display:none"
+>
 
 <input
-id="id"
+id="newid"
 placeholder="ID">
 
 <input
 id="input"
-placeholder="Input">
+placeholder="Input URL">
 
 <input
 id="output"
-placeholder="Output">
+placeholder="Output RTMP">
 
-<button onclick="save()">
+<button
+onclick="save()">
+
 إضافة
+
 </button>
 
 </div>
@@ -419,8 +460,11 @@ v=>v.style.display="none"
 );
 
 document
-.getElementById(id)
-.style.display="block";
+.getElementById(
+id
+)
+.style.display=
+"block";
 
 }
 
@@ -444,32 +488,65 @@ html+=\`
 
 <div class="card">
 
-<h3>
+<h2>
 
-\${id}
+📺 \${id}
 
-</h3>
+</h2>
+
+<div>
+
+<b>INPUT</b>
+
+<br>
+
+\${data[id].input}
+
+</div>
+
+<br>
+
+<div>
+
+<b>OUTPUT</b>
+
+<br>
+
+\${data[id].output}
+
+</div>
+
+<div class="actions">
 
 <button
 onclick="start('\${id}')">
 
-▶
+▶ تشغيل
 
 </button>
 
 <button
 onclick="stop('\${id}')">
 
-⏹
+⏹ إيقاف
+
+</button>
+
+<button
+onclick="editChannel('\${id}')">
+
+✏ تعديل
 
 </button>
 
 <button
 onclick="del('\${id}')">
 
-🗑
+🗑 حذف
 
 </button>
+
+</div>
 
 </div>
 
@@ -493,6 +570,7 @@ async function save(){
 await fetch(
 "/channel",
 {
+
 method:"POST",
 
 headers:{
@@ -501,10 +579,11 @@ headers:{
 },
 
 body:
+
 JSON.stringify({
 
 id:
-id.value,
+newid.value,
 
 input:
 input.value,
@@ -513,7 +592,84 @@ output:
 output.value
 
 })
-});
+
+}
+
+);
+
+alert(
+"تمت الإضافة"
+);
+
+load();
+
+}
+
+async function editChannel(id){
+
+const r=
+await fetch(
+"/channels"
+);
+
+const data=
+await r.json();
+
+const ch=
+data[id];
+
+const input=
+prompt(
+"Input",
+ch.input
+);
+
+if(
+input===null
+)
+return;
+
+const output=
+prompt(
+"Output",
+ch.output
+);
+
+if(
+output===null
+)
+return;
+
+await fetch(
+
+"/channel/"+id,
+
+{
+
+method:"PUT",
+
+headers:{
+"Content-Type":
+"application/json"
+},
+
+body:
+
+JSON.stringify({
+
+input,
+
+output
+
+})
+
+}
+
+);
+
+alert(
+"تم التعديل"
+);
 
 load();
 
@@ -521,11 +677,22 @@ load();
 
 async function del(id){
 
+if(
+!confirm(
+"حذف القناة؟"
+)
+)
+return;
+
 await fetch(
+
 "/channel/"+id,
+
 {
 method:"DELETE"
-});
+}
+
+);
 
 load();
 
