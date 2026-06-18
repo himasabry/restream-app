@@ -322,15 +322,15 @@ ok:true
 // ===============================
 app.get("/dashboard",(req,res)=>{
 
-res.send(`
+const html = `
 
 <!DOCTYPE html>
 <html dir="rtl">
-<head>
 
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stream Control Panel</title>
+<title>Streaming Panel</title>
 
 <style>
 
@@ -343,7 +343,7 @@ display:flex;
 min-height:100vh;
 }
 
-/* SIDEBAR */
+/* SIDE */
 .side{
 width:240px;
 background:#101938;
@@ -388,8 +388,8 @@ border-radius:15px;
 border:1px solid #1d2b56;
 }
 
-.status-live{color:#00ff88;font-weight:bold}
-.status-off{color:#ff5555;font-weight:bold}
+.live{color:#00ff88;font-weight:bold}
+.off{color:#ff5555;font-weight:bold}
 
 .btns{
 display:flex;
@@ -398,7 +398,7 @@ margin-top:12px;
 flex-wrap:wrap;
 }
 
-button.action{
+button{
 padding:10px;
 border:none;
 border-radius:8px;
@@ -436,17 +436,15 @@ border:none;
 
 <div class="main">
 
-<!-- CHANNELS -->
 <div id="channels">
 <div id="list" class="grid"></div>
 </div>
 
-<!-- ADD -->
 <div id="add" style="display:none">
 
 <h2>➕ إضافة قناة</h2>
 
-<input id="id" placeholder="Channel ID">
+<input id="id" placeholder="ID">
 <input id="input" placeholder="Input URL">
 <input id="output" placeholder="Output RTMP">
 
@@ -461,10 +459,8 @@ border:none;
 let totalViews = {};
 
 function show(id){
-
 document.getElementById("channels").style.display="none";
 document.getElementById("add").style.display="none";
-
 document.getElementById(id).style.display="block";
 }
 
@@ -485,49 +481,43 @@ if(!totalViews[id]) totalViews[id]=0;
 
 totalViews[id] += status[id]?.viewers || 0;
 
-box.innerHTML += `
-
+box.innerHTML += \`
 <div class="card">
 
-<h3>📺 ${id}</h3>
+<h3>📺 \${id}</h3>
 
 <div>
-${status[id]?.active
-? '<span class="status-live">🟢 LIVE</span>'
-: '<span class="status-off">🔴 OFF</span>'}
+\${status[id]?.active
+? '<span class="live">🟢 LIVE</span>'
+: '<span class="off">🔴 OFF</span>'}
 </div>
 
 <br>
 
-👁️ المشاهدين: <b>${status[id]?.viewers || 0}</b><br>
-📈 الإجمالي: <b>${totalViews[id]}</b>
+👁️ المشاهدين: <b>\${status[id]?.viewers || 0}</b><br>
+📈 الإجمالي: <b>\${totalViews[id]}</b>
 
 <hr>
 
-<div>
 <b>INPUT</b><br>
-${channels[id].input}
-</div>
+\${channels[id].input}
 
-<br>
+<br><br>
 
-<div>
 <b>OUTPUT</b><br>
-${channels[id].output}
-</div>
+\${channels[id].output}
 
 <div class="btns">
 
-<button class="action start" onclick="start('${id}')">▶ تشغيل</button>
-<button class="action stop" onclick="stop('${id}')">⏹ إيقاف</button>
-<button class="action edit" onclick="editChannel('${id}')">✏ تعديل</button>
-<button class="action del" onclick="del('${id}')">🗑 حذف</button>
+<button class="start" onclick="start('\${id}')">▶ تشغيل</button>
+<button class="stop" onclick="stop('\${id}')">⏹ إيقاف</button>
+<button class="edit" onclick="editChannel('\${id}')">✏ تعديل</button>
+<button class="del" onclick="del('\${id}')">🗑 حذف</button>
 
 </div>
 
 </div>
-
-`;
+\`;
 
 }
 
@@ -547,9 +537,7 @@ async function addChannel(){
 
 await fetch("/channel",{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 id:id.value,
 input:input.value,
@@ -562,11 +550,7 @@ show("channels");
 }
 
 async function del(id){
-
-await fetch("/channel/"+id,{
-method:"DELETE"
-});
-
+await fetch("/channel/"+id,{method:"DELETE"});
 load();
 }
 
@@ -576,16 +560,14 @@ const r = await fetch("/channels");
 const data = await r.json();
 
 const inputVal = prompt("Input",data[id].input);
-if(inputVal===null) return;
+if(!inputVal) return;
 
 const outputVal = prompt("Output",data[id].output);
-if(outputVal===null) return;
+if(!outputVal) return;
 
 await fetch("/channel/"+id,{
 method:"PUT",
-headers:{
-"Content-Type":"application/json"
-},
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 input:inputVal,
 output:outputVal
@@ -603,7 +585,9 @@ setInterval(load,3000);
 </body>
 </html>
 
-`);
+`;
+
+res.send(html);
 
 });
 // ===============================
