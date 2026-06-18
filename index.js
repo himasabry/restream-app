@@ -20,8 +20,8 @@ const channels = {
     output: "rtmp://ssh101.bozztv.com:1935/ssh101/max4khdr"
   },
   ch1: {
-    input: "https://max.pl4k.workers.dev/max14k/index.m3u8",
-    output: "rtmp://rtmp.livepeer.com/live/6ce1-v2hu-38fu-awwa"
+    input: "https://www.metateam.shop/bn_max_1_h265_4k/tracks-v1a1/mono.m3u8",
+    output: "rtmp://rtmp.livepeer.com/live/a013-em1u-5x5q-u023"
   },
   ch2: {
     input: "https://max.pl4k.workers.dev/max24k/index.m3u8",
