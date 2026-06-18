@@ -462,6 +462,7 @@ margin:10px 0;
 <script>
 
 let totalViews = {};
+let lastViewers = {};
 
 function show(id){
 document.getElementById("channels").style.display="none";
@@ -482,8 +483,22 @@ box.innerHTML="";
 
 for(const id in channels){
 
-if(!totalViews[id]) totalViews[id]=0;
-totalViews[id] += status[id]?.viewers || 0;
+if(!totalViews[id])
+totalViews[id]=0;
+
+if(!lastViewers[id])
+lastViewers[id]=0;
+
+const current =
+status[id]?.viewers || 0;
+
+// نزود فقط لو العدد زاد
+if(current > lastViewers[id]){
+totalViews[id] +=
+(current - lastViewers[id]);
+}
+
+lastViewers[id]=current;
 
 box.innerHTML += \`
 <div class="card">
