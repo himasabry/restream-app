@@ -90,7 +90,7 @@ function spawnStream(id) {
     "-i", getLogo(id),
 
     "-filter_complex",
-    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=-1:300[logo];[base][logo]overlay=W-w-10:10",
+    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[base];[1:v]scale=-1:3100[logo];[base][logo]overlay=W-w-2:2",
 
     "-c:v", "libx264",
     "-preset", "veryfast",
