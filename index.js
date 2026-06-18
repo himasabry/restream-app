@@ -28,7 +28,7 @@ const channels = {
     output: "rtmp://rtmp.livepeer.com/live/5716-lclm-8mhs-hd0n"
   },
   ch3: {
-    input: "http://2030.buzz-4k.xyz/live/56272882873737/xh3agpq1cm/1950411.m3u8",
+    input: "https://man1ted.com/watch/beemax1.m3u8?md5=uVAU53dRzrb672pju4i-9Q&expires=1781785275",
     output: "rtmp://ssh101.bozztv.com/ssh101/max1hd"
   },
   ch4: {
