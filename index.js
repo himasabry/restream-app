@@ -235,224 +235,331 @@ app.post("/import", (req, res) => {
   res.send("imported");
 });
 
+// ➕ إضافة قناة
+app.post("/channel", (req,res)=>{
+const {id,input,output}=req.body;
+
+if(!id||!input||!output){
+return res.status(400).json({
+ok:false
+});
+}
+
+channels[id]={input,output};
+
+res.json({
+ok:true
+});
+});
+
+// ✏ تعديل
+app.put("/channel/:id",(req,res)=>{
+
+const old=req.params.id;
+
+if(!channels[old]){
+return res.sendStatus(404);
+}
+
+channels[old]={
+...channels[old],
+...req.body
+};
+
+res.json({
+ok:true
+});
+
+});
+
+// 🗑 حذف
+app.delete("/channel/:id",(req,res)=>{
+
+const id=req.params.id;
+
+if(ffmpegProcesses[id]){
+ffmpegProcesses[id].kill("SIGKILL");
+delete ffmpegProcesses[id];
+}
+
+delete channels[id];
+
+res.json({
+ok:true
+});
+
+});
+
+// 📋 قائمة القنوات
+app.get("/channels",(req,res)=>{
+res.json(channels);
+});
+
 // ===============================
 // 📡 DASHBOARD PRO
 // ===============================
-app.get("/dashboard", (req, res) => {
-  res.send(`
+app.get("/dashboard",(req,res)=>{
+
+res.send(`
+
 <!DOCTYPE html>
+
 <html dir="rtl">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Control Panel PRO</title>
+
+<title>Admin Panel</title>
 
 <style>
+
 body{
 margin:0;
-font-family:Arial;
 background:#0b1020;
-color:#fff;
+color:white;
+font-family:Arial;
 display:flex;
-height:100vh;
 }
 
-/* SIDEBAR */
-.sidebar{
+.side{
 width:240px;
-background:#0f1730;
-padding:15px;
-border-left:1px solid #1d2b56;
-display:flex;
-flex-direction:column;
-gap:10px;
+background:#101938;
+height:100vh;
+padding:20px;
 }
 
-.sidebar h2{
-font-size:18px;
-margin-bottom:10px;
-}
-
-.menu button{
+.side button{
 width:100%;
-padding:12px;
+padding:14px;
+margin-bottom:10px;
 border:none;
 border-radius:10px;
 cursor:pointer;
-background:#151f3f;
-color:white;
-text-align:right;
 }
 
-.menu button:hover{
-background:#22305f;
-}
-
-/* CONTENT */
-.content{
+.main{
 flex:1;
 padding:20px;
-overflow:auto;
-}
-
-/* CARDS */
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-gap:15px;
-margin-top:15px;
 }
 
 .card{
-background:#101938;
+background:#151f3f;
 padding:15px;
-border-radius:15px;
-border:1px solid #1d2b56;
+border-radius:12px;
+margin-bottom:10px;
 }
 
-.online{color:#00ff88}
-.offline{color:#ff4d4d}
-
-.btns{
-display:flex;
-gap:10px;
-margin-top:10px;
+input{
+width:100%;
+padding:12px;
+margin-bottom:10px;
 }
 
-button.action{
-flex:1;
-padding:10px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-}
-
-.start{background:#1db954;color:white}
-.stop{background:#e74c3c;color:white}
-
-.section{
-display:none;
-}
-
-.active{
-display:block;
-}
 </style>
+
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-<h2>📡 CONTROL PANEL</h2>
+<div class="side">
 
-<div class="menu">
-<button onclick="show('overview')">📊 Overview</button>
-<button onclick="show('channels')">📺 Channels</button>
-<button onclick="show('settings')">⚙ Settings</button>
-<button onclick="show('logs')">📜 Logs</button>
-</div>
-</div>
+<h2>📡 PANEL</h2>
 
-<!-- CONTENT -->
-<div class="content">
+<button onclick="tab('channels')">
+📺 القنوات
+</button>
 
-<!-- OVERVIEW -->
-<div id="overview" class="section active">
-<h2>📊 Overview</h2>
-<div id="stats"></div>
+<button onclick="tab('add')">
+➕ إضافة
+</button>
+
 </div>
 
-<!-- CHANNELS -->
-<div id="channels" class="section">
-<h2>📺 Channels</h2>
-<div id="grid" class="grid"></div>
+<div class="main">
+
+<div id="channels">
+
 </div>
 
-<!-- SETTINGS -->
-<div id="settings" class="section">
-<h2>⚙ Settings</h2>
-<p>System is running in PRO mode</p>
-</div>
+<div id="add"
+style="display:none">
 
-<!-- LOGS -->
-<div id="logs" class="section">
-<h2>📜 Logs</h2>
-<p>FFmpeg logs will appear in server console</p>
+<input
+id="id"
+placeholder="ID">
+
+<input
+id="input"
+placeholder="Input">
+
+<input
+id="output"
+placeholder="Output">
+
+<button onclick="save()">
+إضافة
+</button>
+
 </div>
 
 </div>
 
 <script>
 
-function show(id){
-document.querySelectorAll('.section')
-.forEach(s=>s.classList.remove('active'));
+function tab(id){
 
-document.getElementById(id).classList.add('active');
+document
+.querySelectorAll(
+".main>div"
+)
+
+.forEach(
+v=>v.style.display="none"
+);
+
+document
+.getElementById(id)
+.style.display="block";
+
 }
 
 async function load(){
 
-const res = await fetch("/status");
-const data = await res.json();
+const r=
+await fetch(
+"/channels"
+);
 
-/* OVERVIEW */
-let live = 0;
-let total = 0;
+const data=
+await r.json();
 
-for(const id in data){
-total++;
-if(data[id].active) live++;
-}
+let html="";
 
-document.getElementById("stats").innerHTML = \`
+for(
+let id in data
+){
+
+html+=\`
+
 <div class="card">
-<h3>🟢 Live Channels: \${live}</h3>
-<h3>📡 Total: \${total}</h3>
+
+<h3>
+
+\${id}
+
+</h3>
+
+<button
+onclick="start('\${id}')">
+
+▶
+
+</button>
+
+<button
+onclick="stop('\${id}')">
+
+⏹
+
+</button>
+
+<button
+onclick="del('\${id}')">
+
+🗑
+
+</button>
+
 </div>
+
 \`;
 
-/* CHANNELS */
-const grid = document.getElementById("grid");
-grid.innerHTML = "";
-
-for(const id in data){
-const ch = data[id];
-
-grid.innerHTML += \`
-<div class="card">
-<h3>\${id}</h3>
-
-<div class="\${ch.active ? 'online':'offline'}">
-\${ch.active ? '🟢 LIVE' : '🔴 OFFLINE'}
-</div>
-
-<p>👁️ \${ch.viewers}</p>
-
-<div class="btns">
-<a href="/start?id=\${id}">
-<button class="action start">Start</button>
-</a>
-
-<a href="/stop?id=\${id}">
-<button class="action stop">Stop</button>
-</a>
-</div>
-
-</div>
-\`;
 }
+
+document
+.getElementById(
+"channels"
+)
+
+.innerHTML=
+
+html;
+
+}
+
+async function save(){
+
+await fetch(
+"/channel",
+{
+method:"POST",
+
+headers:{
+"Content-Type":
+"application/json"
+},
+
+body:
+JSON.stringify({
+
+id:
+id.value,
+
+input:
+input.value,
+
+output:
+output.value
+
+})
+});
+
+load();
+
+}
+
+async function del(id){
+
+await fetch(
+"/channel/"+id,
+{
+method:"DELETE"
+});
+
+load();
+
+}
+
+function start(id){
+
+location=
+"/start?id="+id;
+
+}
+
+function stop(id){
+
+location=
+"/stop?id="+id;
+
 }
 
 load();
-setInterval(load, 2000);
+
+setInterval(
+load,
+3000
+);
 
 </script>
 
 </body>
+
 </html>
+
 `);
+
 });
 
 // ===============================
