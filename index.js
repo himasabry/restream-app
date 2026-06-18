@@ -21,7 +21,7 @@ const channels = {
   },
   ch1: {
     input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
-    output: "rtmp://rtmp.livepeer.com/live/a013-em1u-5x5q-u023"
+    output: "rtmp://fr.pscp.tv:80/x/ivphyvtww7k3"
   },
   ch2: {
     input: "https://max.pl4k.workers.dev/max24k/index.m3u8",
