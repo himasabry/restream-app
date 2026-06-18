@@ -21,11 +21,11 @@ const channels = {
   },
   ch1: {
     input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
-    output: "rtmp://fr.pscp.tv:80/x/ivphyvtww7k3"
+    output: "rtmp://fr.pscp.tv:80/x/"
   },
   ch2: {
-    input: "https://max.pl4k.workers.dev/max24k/index.m3u8",
-    output: "rtmp://rtmp.livepeer.com/live/5716-lclm-8mhs-hd0n"
+    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745019",
+    output: "rtmp://fr.pscp.tv:80/x/ivphyvtww7k3"
   },
   ch3: {
     input: "https://man1ted.com/watch/beemax1.m3u8",
