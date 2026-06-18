@@ -325,155 +325,99 @@ app.get("/dashboard",(req,res)=>{
 res.send(`
 
 <!DOCTYPE html>
-
 <html dir="rtl">
 
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width,initial-scale=1">
-
-<title>
-Control Panel
-</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Control Panel PRO</title>
 
 <style>
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial;
-}
-
 body{
-
+margin:0;
+font-family:Arial;
 background:#0b1020;
-
 color:white;
-
 display:flex;
-
 min-height:100vh;
-
 }
 
+/* SIDEBAR */
 .side{
-
-width:260px;
-
+width:250px;
 background:#101938;
-
 padding:20px;
-
 }
 
 .side h2{
-
 margin-bottom:20px;
-
 }
 
 .side button{
-
 width:100%;
-
-padding:14px;
-
-margin-bottom:10px;
-
-background:#182347;
-
-border:none;
-
-border-radius:12px;
-
-color:white;
-
-cursor:pointer;
-
-}
-
-.main{
-
-flex:1;
-
-padding:20px;
-
-overflow:auto;
-
-}
-
-.grid{
-
-display:grid;
-
-grid-template-columns:
-repeat(
-auto-fill,
-minmax(
-330px,
-1fr
-));
-
-gap:15px;
-
-}
-
-.card{
-
-background:#151f3f;
-
-padding:18px;
-
-border-radius:15px;
-
-}
-
-.live{
-
-color:#00ff88;
-
-}
-
-.off{
-
-color:#ff5555;
-
-}
-
-.actions{
-
-display:flex;
-
-gap:10px;
-
-margin-top:15px;
-
-}
-
-.actions button{
-
-padding:10px;
-
-border:none;
-
-border-radius:10px;
-
-cursor:pointer;
-
-}
-
-input{
-
-width:100%;
-
 padding:12px;
-
 margin-bottom:10px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#182347;
+color:white;
+font-weight:bold;
+}
 
+/* MAIN */
+.main{
+flex:1;
+padding:20px;
+overflow:auto;
+}
+
+/* GRID */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+gap:15px;
+}
+
+/* CARD */
+.card{
+background:#151f3f;
+padding:15px;
+border-radius:15px;
+border:1px solid #1d2b56;
+}
+
+.status-live{color:#00ff88;font-weight:bold}
+.status-off{color:#ff5555;font-weight:bold}
+
+.btns{
+display:flex;
+gap:8px;
+margin-top:12px;
+flex-wrap:wrap;
+}
+
+button.action{
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.start{background:#1db954;color:white}
+.stop{background:#e74c3c;color:white}
+.edit{background:#3498db;color:white}
+.del{background:#444;color:white}
+
+/* INPUTS */
+input{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+border-radius:8px;
+border:none;
 }
 
 </style>
@@ -484,66 +428,30 @@ margin-bottom:10px;
 
 <div class="side">
 
-<h2>
+<h2>📡 PANEL</h2>
 
-📡 لوحة التحكم
-
-</h2>
-
-<button
-onclick="show('channels')">
-
-📺 القنوات
-
-</button>
-
-<button
-onclick="show('add')">
-
-➕ إضافة
-
-</button>
+<button onclick="show('channels')">📺 القنوات</button>
+<button onclick="show('add')">➕ إضافة قناة</button>
 
 </div>
 
 <div class="main">
 
-<div
-id="channels">
-
-<div
-class="grid"
-id="list">
-
+<!-- CHANNELS -->
+<div id="channels">
+<div id="list" class="grid"></div>
 </div>
 
-</div>
+<!-- ADD -->
+<div id="add" style="display:none">
 
-<div
-id="add"
+<h2>➕ إضافة قناة</h2>
 
-style="
-display:none
-">
+<input id="id" placeholder="Channel ID">
+<input id="input" placeholder="Input URL">
+<input id="output" placeholder="Output RTMP">
 
-<input
-id="newid"
-placeholder="ID">
-
-<input
-id="newinput"
-placeholder="Input">
-
-<input
-id="newoutput"
-placeholder="Output">
-
-<button
-onclick="save()">
-
-إضافة
-
-</button>
+<button onclick="addChannel()">إضافة</button>
 
 </div>
 
@@ -551,418 +459,154 @@ onclick="save()">
 
 <script>
 
-let totalViews={};
+let totalViews = {};
 
 function show(id){
 
-document
-.getElementById(
-"channels"
-)
+document.getElementById("channels").style.display="none";
+document.getElementById("add").style.display="none";
 
-style.display=
-"none";
-
-document
-.getElementById(
-"add"
-)
-
-style.display=
-"none";
-
-document
-.getElementById(
-id
-)
-
-style.display=
-"block";
-
+document.getElementById(id).style.display="block";
 }
 
 async function load(){
 
-const ch=
-await fetch(
-"/channels"
-);
+const ch = await fetch("/channels");
+const channels = await ch.json();
 
-const channels=
-await ch.json();
+const st = await fetch("/status");
+const status = await st.json();
 
-const st=
-await fetch(
-"/status"
-);
-
-const status=
-await st.json();
-
-const box=
-document
-.getElementById(
-"list"
-);
-
+const box = document.getElementById("list");
 box.innerHTML="";
 
-for(
-const id
-in channels
-){
+for(const id in channels){
 
-if(
-!totalViews[id]
-)
+if(!totalViews[id]) totalViews[id]=0;
 
-totalViews[id]=0;
+totalViews[id] += status[id]?.viewers || 0;
 
-totalViews[id]+=
-status[id]
-?.viewers
-||
-0;
-
-box.innerHTML+=\`
+box.innerHTML += `
 
 <div class="card">
 
-<h2>
+<h3>📺 ${id}</h3>
 
-📺 \${id}
-
-</h2>
-
-<div class="
-\${
-
-status[id]
-?.active
-
-?
-
-'live'
-
-:
-
-'off'
-
-}
-
-">
-
-\${
-
-status[id]
-?.active
-
-?
-
-'🟢 شغالة'
-
-:
-
-'🔴 متوقفة'
-
-}
-
+<div>
+${status[id]?.active
+? '<span class="status-live">🟢 LIVE</span>'
+: '<span class="status-off">🔴 OFF</span>'}
 </div>
 
 <br>
 
-👁️ المشاهدين الآن:
+👁️ المشاهدين: <b>${status[id]?.viewers || 0}</b><br>
+📈 الإجمالي: <b>${totalViews[id]}</b>
 
-<b>
-
-\${
-
-status[id]
-?.viewers
-
-||
-
-0
-
-}
-
-</b>
-
-<br><br>
-
-📈 إجمالي المشاهدات:
-
-<b>
-
-\${
-
-totalViews[id]
-
-}
-
-</b>
-
-<br><br>
+<hr>
 
 <div>
-
-<b>
-
-Input
-
-</b>
-
-<br>
-
-\${
-
-channels[id]
-.input
-
-}
-
+<b>INPUT</b><br>
+${channels[id].input}
 </div>
 
 <br>
 
 <div>
-
-<b>
-
-Output
-
-</b>
-
-<br>
-
-\${
-
-channels[id]
-.output
-
-}
-
+<b>OUTPUT</b><br>
+${channels[id].output}
 </div>
 
-<div
-class="actions">
+<div class="btns">
 
-<button
-onclick="start('\${id}')">
-
-▶
-
-</button>
-
-<button
-onclick="stop('\${id}')">
-
-⏹
-
-</button>
-
-<button
-onclick="editChannel('\${id}')">
-
-✏
-
-</button>
-
-<button
-onclick="del('\${id}')">
-
-🗑
-
-</button>
+<button class="action start" onclick="start('${id}')">▶ تشغيل</button>
+<button class="action stop" onclick="stop('${id}')">⏹ إيقاف</button>
+<button class="action edit" onclick="edit('${id}')">✏ تعديل</button>
+<button class="action del" onclick="del('${id}')">🗑 حذف</button>
 
 </div>
 
 </div>
 
-\`;
+`;
 
 }
 
 }
 
-function start(id){
-
-location=
-"/start?id="+id;
-
+async function start(id){
+await fetch("/start?id="+id);
+load();
 }
 
-function stop(id){
-
-location=
-"/stop?id="+id;
-
+async function stop(id){
+await fetch("/stop?id="+id);
+load();
 }
 
-async function save(){
+async function addChannel(){
 
-await fetch(
-
-"/channel",
-
-{
-
-method:
-"POST",
-
+await fetch("/channel",{
+method:"POST",
 headers:{
-
-"Content-Type":
-
-"application/json"
-
+"Content-Type":"application/json"
 },
-
-body:
-
-JSON.stringify({
-
-id:
-newid.value,
-
-input:
-newinput.value,
-
-output:
-newoutput.value
-
+body:JSON.stringify({
+id:id.value,
+input:input.value,
+output:output.value
 })
-
-}
-
-);
+});
 
 load();
-
-show(
-"channels"
-);
-
-}
-
-async function editChannel(id){
-
-const r=
-await fetch(
-"/channels"
-);
-
-const data=
-await r.json();
-
-const input=
-prompt(
-
-"Input",
-
-data[id]
-.input
-
-);
-
-if(
-input===null
-)
-return;
-
-const output=
-prompt(
-
-"Output",
-
-data[id]
-.output
-
-);
-
-if(
-output===null
-)
-return;
-
-await fetch(
-
-"/channel/"+id,
-
-{
-
-method:
-"PUT",
-
-headers:{
-
-"Content-Type":
-"application/json"
-
-},
-
-body:
-
-JSON.stringify({
-
-input,
-
-output
-
-})
-
-}
-
-);
-
-load();
-
+show("channels");
 }
 
 async function del(id){
 
-if(
-!confirm(
-"حذف؟"
-)
-)
-
-return;
-
-await fetch(
-
-"/channel/"+id,
-
-{
-
-method:
-"DELETE"
-
-}
-
-);
+await fetch("/channel/"+id,{
+method:"DELETE"
+});
 
 load();
+}
 
+async function edit(id){
+
+const r = await fetch("/channels");
+const data = await r.json();
+
+const inputVal = prompt("Input",data[id].input);
+if(inputVal===null) return;
+
+const outputVal = prompt("Output",data[id].output);
+if(outputVal===null) return;
+
+await fetch("/channel/"+id,{
+method:"PUT",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+input:inputVal,
+output:outputVal
+})
+});
+
+load();
 }
 
 load();
-
-setInterval(
-load,
-3000
-);
+setInterval(load,3000);
 
 </script>
 
 </body>
-
 </html>
 
 `);
 
 });
-
 // ===============================
 // 🚀 WebSocket server
 // ===============================
