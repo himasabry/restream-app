@@ -349,17 +349,8 @@ background:linear-gradient(90deg,#3da9fc,#00ff99);
 }
 
 /* STATUS */
-.live{
-color:#00ff99;
-font-weight:bold;
-font-size:14px;
-}
-
-.off{
-color:#ff4d4d;
-font-weight:bold;
-font-size:14px;
-}
+.live{color:#00ff99;font-weight:bold}
+.off{color:#ff4d4d;font-weight:bold}
 
 /* INFO */
 .info{
@@ -386,16 +377,14 @@ font-weight:bold;
 transition:0.2s;
 }
 
-button:hover{
-transform:scale(1.05);
-}
+button:hover{transform:scale(1.05)}
 
 .start{background:#1db954;color:white}
 .stop{background:#e74c3c;color:white}
 .edit{background:#3498db;color:white}
 .del{background:#555;color:white}
 
-/* INPUT FORM */
+/* INPUT */
 input{
 width:100%;
 padding:12px;
@@ -412,10 +401,7 @@ border:1px solid #3da9fc;
 }
 
 /* TITLE */
-h3{
-margin:0;
-color:#3da9fc;
-}
+h3{margin:0;color:#3da9fc}
 
 hr{
 border:0;
@@ -470,6 +456,7 @@ document.getElementById("add").style.display="none";
 document.getElementById(id).style.display="block";
 }
 
+// 📊 FULL REFRESH (only when load runs)
 async function load(){
 
 const ch = await fetch("/channels");
@@ -483,22 +470,17 @@ box.innerHTML="";
 
 for(const id in channels){
 
-if(!totalViews[id])
-totalViews[id]=0;
+if(!totalViews[id]) totalViews[id]=0;
+if(!lastViewers[id]) lastViewers[id]=0;
 
-if(!lastViewers[id])
-lastViewers[id]=0;
+const current = status[id]?.viewers || 0;
 
-const current =
-status[id]?.viewers || 0;
-
-// نزود فقط لو العدد زاد
+// ✅ add only difference (safe logic)
 if(current > lastViewers[id]){
-totalViews[id] +=
-(current - lastViewers[id]);
+totalViews[id] += (current - lastViewers[id]);
 }
 
-lastViewers[id]=current;
+lastViewers[id] = current;
 
 box.innerHTML += \`
 <div class="card">
@@ -510,7 +492,7 @@ box.innerHTML += \`
 </div>
 
 <div class="info">
-👁️ الحالي: <b>\${status[id]?.viewers || 0}</b><br>
+👁️ الحالي: <b>\${current}</b><br>
 📊 الإجمالي: <b>\${totalViews[id]}</b>
 </div>
 
@@ -540,6 +522,7 @@ box.innerHTML += \`
 
 }
 
+// ▶ actions
 async function start(id){
 await fetch("/start?id="+id);
 load();
@@ -594,8 +577,8 @@ output:outputVal
 load();
 }
 
+// 🚀 initial load only
 load();
-setInterval(load,3000);
 
 </script>
 
@@ -607,7 +590,6 @@ setInterval(load,3000);
 res.send(html);
 
 });
-
 
 // ===============================
 // 🚀 WebSocket server
