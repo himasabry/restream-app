@@ -25,7 +25,7 @@ const channels = {
   },
   ch2: {
     input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745019",
-    output: "rtmp://vsu.okcdn.ru/input/14855632920086_16365841222166_eqrazwpkny"
+    output: "rtmp://16.148.166.101:1935/app/6a3587a35c94624b7749a46b"
   },
   ch3: {
     input: "https://man1ted.com/watch/beemax1.m3u8",
