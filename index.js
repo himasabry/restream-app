@@ -25,7 +25,7 @@ const channels = {
   },
   ch2: {
     input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745019",
-    output: "rtmp://userId-2840-0eaeafb36e-stream-proxy.cloud.red5.net:1935/live/SUPERTV1"
+    output: "rtmp://vsu.okcdn.ru/input/14855632920086_16365841222166_eqrazwpkny"
   },
   ch3: {
     input: "https://man1ted.com/watch/beemax1.m3u8",
