@@ -37,7 +37,7 @@ const channels = {
   },
   ch5: {
     input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255225.m3u8",
-    output: "rtmp://rtmp.livepeer.com/live/a4be-dmef-x7d9-4kme"
+    output: "rtmp://vsu.okcdn.ru/input/14863707479574_16379956300310_uoslkp4xrm"
   }
 };
 
