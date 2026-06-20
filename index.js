@@ -21,11 +21,11 @@ const channels = {
   },
   ch1: {
     input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
-    output: "rtmp://fr.pscp.tv:80/x/ivphyvtww7k3"
+    output: "rtmp://vsu.okcdn.ru/input/14855632920086_16365841222166_eqrazwpkny"
   },
   ch2: {
     input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745019",
-    output: "rtmp://16.148.166.101:1935/app/6a3587a35c94624b7749a46b"
+    output: "rtmp://vsu.okcdn.ru/input/14863707479574_16379956300310_uoslkp4xrm"
   },
   ch3: {
     input: "https://man1ted.com/watch/beemax1.m3u8",
@@ -33,7 +33,7 @@ const channels = {
   },
   ch4: {
     input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255226.m3u8",
-    output: "rtmp://live.restream.io/live/re_1727644_event8e0ea00bf3544ac2b68fffd99b87b0f2"
+    output: "rtmp://fr.pscp.tv:80/x/ivphyvtww7k3"
   },
   ch5: {
     input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255225.m3u8",
