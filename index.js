@@ -38,6 +38,10 @@ const channels = {
   ch5: {
     input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255225.m3u8",
     output: "rtmp://vsu.okcdn.ru/input/14863707479574_16379956300310_uoslkp4xrm"
+  },
+  ch6: {
+    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
+    output: "rtmp://vsu.okcdn.ru/input/14901168119318_16447213341206_ssfncxg2zu"
   }
 };
 
@@ -52,6 +56,7 @@ function getLogo(id) {
     ch3: "logo33.png",
     ch4: "logo44.png",
     ch5: "logo55.png",
+    ch6: "logo66.png",
   };
 
   return logos[id] || "logo.png";
