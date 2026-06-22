@@ -24,7 +24,7 @@ const channels = {
     output: "rtmp://vsu.okcdn.ru/input/14855632920086_16365841222166_eqrazwpkny"
   },
   ch2: {
-    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745019",
+    input: "https://stream.camcloud.stream/stream/97e7e9e05d4e/playlist.m3u8",
     output: "rtmp://vsu.okcdn.ru/input/14863707479574_16379956300310_uoslkp4xrm"
   },
   ch3: {
