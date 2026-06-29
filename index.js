@@ -546,9 +546,13 @@ box.innerHTML += \`
 </div>
 
 <div class="info">
-👁️ الحالي: <b>\${current}</b><br>
+👁️ الحالي:
+<b>\${current}</b>
+
+<br>
+
 📊 الإجمالي:
-${status[id]?.total || 0}</b>
+<b>\${status[id]?.total || 0}</b>
 </div>
 
 <hr>
