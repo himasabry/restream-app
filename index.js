@@ -619,7 +619,7 @@ onclick="del('${id}')">
 
 }
 
-}
+} // ← دي كانت ناقصة
 
 // ▶ actions
 async function start(id){
@@ -636,7 +636,9 @@ async function addChannel(){
 
 await fetch("/channel",{
 method:"POST",
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json"
+},
 body:JSON.stringify({
 id:id.value,
 input:input.value,
@@ -646,38 +648,73 @@ output:output.value
 
 load();
 show("channels");
+
 }
 
 async function del(id){
-await fetch("/channel/"+id,{method:"DELETE"});
+
+await fetch(
+"/channel/"+id,
+{
+method:"DELETE"
+}
+);
+
 load();
+
 }
 
 async function editChannel(id){
 
-const r = await fetch("/channels");
-const data = await r.json();
+const r =
+await fetch("/channels");
 
-const inputVal = prompt("Input",data[id].input);
-if(!inputVal) return;
+const data =
+await r.json();
 
-const outputVal = prompt("Output",data[id].output);
-if(!outputVal) return;
+const inputVal =
+prompt(
+"Input",
+data[id].input
+);
 
-await fetch("/channel/"+id,{
+if(!inputVal)
+return;
+
+const outputVal =
+prompt(
+"Output",
+data[id].output
+);
+
+if(!outputVal)
+return;
+
+await fetch(
+"/channel/"+id,
+{
 method:"PUT",
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json"
+},
 body:JSON.stringify({
 input:inputVal,
 output:outputVal
 })
-});
+}
+);
 
 load();
+
 }
 
-// 🚀 initial load only
+// 🚀 initial load
 load();
+
+setInterval(
+load,
+3000
+);
 
 </script>
 
