@@ -541,21 +541,13 @@ box.innerHTML += `
 
 <h3>📺 ${id}</h3>
 
-<div class="${
-status[id]?.active
-?
-'live'
-:
-'off'
-}">
+<div class="${status[id]?.active ? 'live':'off'}">
 
-${
-status[id]?.active
+${status[id]?.active
 ?
 '🟢 LIVE'
 :
-'🔴 OFFLINE'
-}
+'🔴 OFFLINE'}
 
 </div>
 
