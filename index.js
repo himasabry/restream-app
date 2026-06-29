@@ -42,6 +42,26 @@ const channels = {
   ch6: {
     input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
     output: "rtmp://vsu.okcdn.ru/input/14901168119318_16447213341206_ssfncxg2zu"
+  },
+  ch7: {
+    input: "https://stream.camcloud.stream/stream/97e7e9e05d4e/playlist.m3u8",
+    output: "rtmp://vsu.okcdn.ru/input/13415538433558_13690939181590_flxfen3y2u"
+  },
+  ch8: {
+    input: "https://man1ted.com/watch/beemax1.m3u8",
+    output: "rtmp://vsu.okcdn.ru/input/9978322492950_8842256321046_oxg7ed4dcm"
+  },
+  ch9: {
+    input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255226.m3u8",
+    output: "rtmp://vsu.okcdn.ru/input/13418102398486_13695919458838_h7ihlwq5ca"
+  },
+  ch10: {
+    input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255225.m3u8",
+    output: "rtmp://vsu.okcdn.ru/input/14994479390230_16613027809814_7sovqbfsba"
+  },
+  ch11: {
+    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
+    output: "rtmp://vsu.okcdn.ru/input/14994482273814_16613032593942_cmf7uzoh2q"
   }
 };
 
@@ -57,6 +77,11 @@ function getLogo(id) {
     ch4: "logo44.png",
     ch5: "logo55.png",
     ch6: "logo66.png",
+    ch7: "quran.png",
+    ch8: "aflam.png",
+    ch9: "mosalsalat.png",
+    ch10: "animy.png",
+    ch11: "kids.png",
   };
 
   return logos[id] || "logo.png";
