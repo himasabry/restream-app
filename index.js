@@ -522,59 +522,42 @@ const status = await st.json();
 const box =
 document.getElementById("list");
 
-box.innerHTML="";
+box.innerHTML = "";
 
 for(const id in channels){
 
 const current =
 status[id]?.viewers || 0;
 
-box.innerHTML += `
-
+const card = `
 <div class="card">
 
 <h3>📺 ${id}</h3>
 
-<div class="${status[id]?.active ? 'live' : 'off'}">
-
-${status[id]?.active
-? '🟢 LIVE'
-: '🔴 OFFLINE'}
-
+<div class="${status[id]?.active ? "live" : "off"}">
+${status[id]?.active ? "🟢 LIVE" : "🔴 OFFLINE"}
 </div>
 
 <div class="info">
-
 👁️ الحالي:
 <b>${current}</b>
-
 <br>
-
 📊 الإجمالي:
 <b>${status[id]?.total || 0}</b>
-
 </div>
 
 <hr>
 
 <div class="info">
-
 <b>INPUT:</b>
-
 <br>
-
 ${channels[id].input}
-
 </div>
 
 <div class="info">
-
 <b>OUTPUT:</b>
-
 <br>
-
 ${channels[id].output}
-
 </div>
 
 <div class="btns">
@@ -582,45 +565,37 @@ ${channels[id].output}
 <button
 class="start"
 onclick="start('${id}')">
-
 ▶ تشغيل
-
 </button>
 
 <button
 class="stop"
 onclick="stop('${id}')">
-
 ⏹ إيقاف
-
 </button>
 
 <button
 class="edit"
 onclick="editChannel('${id}')">
-
 ✏ تعديل
-
 </button>
 
 <button
 class="del"
 onclick="del('${id}')">
-
 🗑 حذف
-
 </button>
 
 </div>
 
 </div>
-
 `;
+
+box.innerHTML += card;
 
 }
 
-} // ← دي كانت ناقصة
-
+}
 // ▶ actions
 async function start(id){
 await fetch("/start?id="+id);
