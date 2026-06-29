@@ -510,22 +510,27 @@ document.getElementById("add").style.display="none";
 document.getElementById(id).style.display="block";
 }
 
-// 📊 FULL REFRESH (only when load runs)
+// 📊 FULL REFRESH
 async function load(){
 
-const ch = await fetch("/channels");
-const channels = await ch.json();
+const ch =
+await fetch("/channels");
 
-const st = await fetch("/status");
-const status = await st.json();
+const channels =
+await ch.json();
 
-const box = document.getElementById("list");
+const st =
+await fetch("/status");
+
+const status =
+await st.json();
+
+const box =
+document.getElementById("list");
+
 box.innerHTML="";
 
 for(const id in channels){
-
-if(!totalViews[id]) totalViews[id]=0;
-if(!lastViewers[id]) lastViewers[id]=0;
 
 const current =
 status[id]?.viewers || 0;
@@ -543,6 +548,7 @@ status[id]?.active
 :
 'off'
 }">
+
 ${
 status[id]?.active
 ?
@@ -550,6 +556,7 @@ status[id]?.active
 :
 '🔴 OFFLINE'
 }
+
 </div>
 
 <div class="info">
@@ -621,6 +628,10 @@ onclick="del('${id}')">
 </div>
 
 `;
+
+}
+
+}
 
 }
 
