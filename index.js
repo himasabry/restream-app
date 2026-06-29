@@ -8,8 +8,11 @@ app.use(express.json());
 // 🎯 STATE
 // ======================
 let ffmpegProcesses = {};
-let viewers = {};
 let viewerIntervals = {};
+let viewers = {};
+
+// إجمالي المشاهدات (لا يتم تصفيره)
+let totalViews = {};
 
 // ======================
 // 🎯 CHANNELS
@@ -143,15 +146,36 @@ function spawnStream(id) {
   ffmpegProcesses[id] = ffmpeg;
 
   // 👁️ viewers fake stable
-  viewers[id] = Math.floor(Math.random() * 5) + 3;
+  viewers[id] = Math.floor(Math.random() * 5) + 2;
+
+if(totalViews[id] == null){
+totalViews[id]=0;
+}
 
   if (viewerIntervals[id]) clearInterval(viewerIntervals[id]);
 
-  viewerIntervals[id] = setInterval(() => {
-    const r = Math.random();
-    if (r > 0.6) viewers[id]++;
-    else if (r < 0.3) viewers[id] = Math.max(1, viewers[id] - 1);
-  }, 5000);
+  viewerIntervals[id] = setInterval(()=>{
+
+const r=Math.random();
+
+if(r>0.7){
+
+viewers[id]++;
+
+totalViews[id]++;
+
+}
+
+else if(r<0.3){
+
+viewers[id]=Math.max(
+1,
+viewers[id]-1
+);
+
+}
+
+},5000);
 
   ffmpeg.stderr.on("data", (d) => {
     console.log(`[${id}] ${d.toString()}`);
@@ -216,9 +240,10 @@ app.get("/status", (req, res) => {
 
   for (const id in channels) {
     result[id] = {
-      active: !!ffmpegProcesses[id],
-      viewers: viewers[id] || 0
-    };
+active: !!ffmpegProcesses[id],
+viewers: viewers[id] || 0,
+total: totalViews[id] || 0
+};
   }
 
   res.json(result);
@@ -477,8 +502,7 @@ margin:10px 0;
 
 <script>
 
-let totalViews = {};
-let lastViewers = {};
+
 
 function show(id){
 document.getElementById("channels").style.display="none";
@@ -523,7 +547,8 @@ box.innerHTML += \`
 
 <div class="info">
 👁️ الحالي: <b>\${current}</b><br>
-📊 الإجمالي: <b>\${totalViews[id]}</b>
+📊 الإجمالي:
+${status[id]?.total || 0}</b>
 </div>
 
 <hr>
