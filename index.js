@@ -529,21 +529,33 @@ for(const id in channels){
 const current =
 status[id]?.viewers || 0;
 
-const card = `
+// ❌ ممنوع const card = `
+// ✅ استخدم += مباشرة
+
+box.innerHTML += `
+
 <div class="card">
 
-<h3>📺 ${id}</h3>
+<h3>📺 \${id}</h3>
 
-<div class="${status[id]?.active ? "live" : "off"}">
-${status[id]?.active ? "🟢 LIVE" : "🔴 OFFLINE"}
+<div class="\${status[id]?.active ? 'live' : 'off'}">
+
+\${status[id]?.active
+? '🟢 LIVE'
+: '🔴 OFFLINE'}
+
 </div>
 
 <div class="info">
+
 👁️ الحالي:
-<b>${current}</b>
+<b>\${current}</b>
+
 <br>
+
 📊 الإجمالي:
-<b>${status[id]?.total || 0}</b>
+<b>\${status[id]?.total || 0}</b>
+
 </div>
 
 <hr>
@@ -551,51 +563,51 @@ ${status[id]?.active ? "🟢 LIVE" : "🔴 OFFLINE"}
 <div class="info">
 <b>INPUT:</b>
 <br>
-${channels[id].input}
+\${channels[id].input}
 </div>
 
 <div class="info">
 <b>OUTPUT:</b>
 <br>
-${channels[id].output}
+\${channels[id].output}
 </div>
 
 <div class="btns">
 
-<button
-class="start"
-onclick="start('${id}')">
+<button class="start"
+onclick="start('\${id}')">
 ▶ تشغيل
 </button>
 
-<button
-class="stop"
-onclick="stop('${id}')">
+<button class="stop"
+onclick="stop('\${id}')">
 ⏹ إيقاف
 </button>
 
-<button
-class="edit"
-onclick="editChannel('${id}')">
+<button class="edit"
+onclick="editChannel('\${id}')">
 ✏ تعديل
 </button>
 
-<button
-class="del"
-onclick="del('${id}')">
+<button class="del"
+onclick="del('\${id}')">
 🗑 حذف
 </button>
 
 </div>
 
 </div>
+
 `;
 
-box.innerHTML += card;
-
 }
 
 }
+
+// 🚀 initial load
+load();
+
+setInterval(load,3000);
 // ▶ actions
 async function start(id){
 await fetch("/start?id="+id);
