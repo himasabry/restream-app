@@ -519,8 +519,7 @@ const channels = await ch.json();
 const st = await fetch("/status");
 const status = await st.json();
 
-const box =
-document.getElementById("list");
+const box = document.getElementById("list");
 
 box.innerHTML = "";
 
@@ -529,10 +528,7 @@ for(const id in channels){
 const current =
 status[id]?.viewers || 0;
 
-// ❌ ممنوع const card = `
-// ✅ استخدم += مباشرة
-
-box.innerHTML += `
+box.innerHTML += \`
 
 <div class="card">
 
@@ -598,16 +594,11 @@ onclick="del('\${id}')">
 
 </div>
 
-`;
+\`;
 
 }
 
 }
-
-// 🚀 initial load
-load();
-
-setInterval(load,3000);
 // ▶ actions
 async function start(id){
 await fetch("/start?id="+id);
@@ -698,10 +689,7 @@ load();
 // 🚀 initial load
 load();
 
-setInterval(
-load,
-3000
-);
+setInterval(load,3000);
 
 </script>
 
