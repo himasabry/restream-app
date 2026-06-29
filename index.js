@@ -513,17 +513,11 @@ document.getElementById(id).style.display="block";
 // 📊 FULL REFRESH
 async function load(){
 
-const ch =
-await fetch("/channels");
+const ch = await fetch("/channels");
+const channels = await ch.json();
 
-const channels =
-await ch.json();
-
-const st =
-await fetch("/status");
-
-const status =
-await st.json();
+const st = await fetch("/status");
+const status = await st.json();
 
 const box =
 document.getElementById("list");
@@ -541,13 +535,11 @@ box.innerHTML += `
 
 <h3>📺 ${id}</h3>
 
-<div class="${status[id]?.active ? 'live':'off'}">
+<div class="${status[id]?.active ? 'live' : 'off'}">
 
 ${status[id]?.active
-?
-'🟢 LIVE'
-:
-'🔴 OFFLINE'}
+? '🟢 LIVE'
+: '🔴 OFFLINE'}
 
 </div>
 
@@ -587,28 +579,32 @@ ${channels[id].output}
 
 <div class="btns">
 
-<button class="start"
+<button
+class="start"
 onclick="start('${id}')">
 
 ▶ تشغيل
 
 </button>
 
-<button class="stop"
+<button
+class="stop"
 onclick="stop('${id}')">
 
 ⏹ إيقاف
 
 </button>
 
-<button class="edit"
+<button
+class="edit"
 onclick="editChannel('${id}')">
 
 ✏ تعديل
 
 </button>
 
-<button class="del"
+<button
+class="del"
 onclick="del('${id}')">
 
 🗑 حذف
