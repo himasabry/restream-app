@@ -633,10 +633,6 @@ onclick="del('${id}')">
 
 }
 
-}
-
-}
-
 // ▶ actions
 async function start(id){
 await fetch("/start?id="+id);
