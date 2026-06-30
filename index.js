@@ -23,12 +23,12 @@ const channels = {
     output: "rtmp://mediamtx-server-production.up.railway.app/live/test"
   },
   ch1: {
-    input: "https://max.st-plasma.workers.dev/max14k/index.m3u8",
-    output: "rtmp://vsu.okcdn.ru/input/14855632920086_16365841222166_eqrazwpkny"
+    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
+    output: "rtmp://vsu.okcdn.ru/input/15459447873244_17903293041372_qj4esun44e"
   },
   ch2: {
-    input: "https://max.st-plasma.workers.dev/max24k/index.m3u8",
-    output: "rtmp://vsu.okcdn.ru/input/14863707479574_16379956300310_uoslkp4xrm"
+    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745019",
+    output: "rtmp://vsu.okcdn.ru/input/15458583715548_17901773523676_eniwiolnjq"
   },
   ch3: {
     input: "https://man1ted.com/watch/beemax1.m3u8",
