@@ -31,8 +31,8 @@ const channels = {
     output: "rtmp://vsu.okcdn.ru/input/15458583715548_17901773523676_eniwiolnjq"
   },
   ch3: {
-    input: "https://man1ted.com/watch/beemax1.m3u8",
-    output: "rtmp://ssh101.bozztv.com/ssh101/max1hd"
+    input: "https://ranapkbd.site/RANAPK33g/TVD/play.php?id=1745020",
+    output: "rtmp://msk.goodgame.ru:1940/live/221746?pwd=5dfed73aa7930d86"
   },
   ch4: {
     input: "http://185.160.192.14/live/171348492752/5S6HGsea3j/255226.m3u8",
